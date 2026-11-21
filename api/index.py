@@ -1,15 +1,30 @@
 import os
 import sys
+from functools import lru_cache
 from pathlib import Path
 from urllib.parse import parse_qsl, urlencode
 
 sys.path.insert(0, str(Path(__file__).resolve().parent.parent / "backend"))
 os.environ.setdefault("DJANGO_ENV", "production")
 
-from config.wsgi import application
+@lru_cache(maxsize=1)
+def django_application():
+    from config.wsgi import application
+
+    return application
 
 
 def app(environ, start_response):
+    required = ("DJANGO_SECRET_KEY", "DJANGO_ALLOWED_HOSTS", "CORS_ALLOWED_ORIGINS", "POSTGRES_HOST")
+    if os.environ["DJANGO_ENV"].strip().lower() == "production" and not all(
+        os.getenv(name, "").strip() for name in required
+    ):
+        start_response("503 Service Unavailable", [
+            ("Content-Type", "application/json"),
+            ("Cache-Control", "no-store"),
+        ])
+        return [b'{"detail":"The backend is awaiting deployment configuration."}']
+
     # The rewrite supplies a path even if the runtime replaces PATH_INFO.
     params = parse_qsl(environ.get("QUERY_STRING", ""), keep_blank_values=True)
     target = next((value for key, value in reversed(params) if key == "__ucc_path"), None)
@@ -17,4 +32,4 @@ def app(environ, start_response):
     path = environ.get("PATH_INFO", "")
     if path in ("", "/", "/api/index", "/api/index.py") and target is not None:
         environ["PATH_INFO"] = "/api/" + target.rstrip("/") + "/"
-    return application(environ, start_response)
+    return django_application()(environ, start_response)
