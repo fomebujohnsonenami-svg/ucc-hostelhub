@@ -1,0 +1,11 @@
+**/.env
+**/.env.*
+**/.venv
+**/node_modules
+**/__pycache__
+**/staticfiles
+**/dist
+**/*.sqlite3
+**/*.pem
+**/*.key
+**/*.p12

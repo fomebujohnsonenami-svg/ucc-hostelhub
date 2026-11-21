@@ -1,6 +1,6 @@
 # Deployment guide
 
-Deploy the React frontend to Vercel and run Django as a separate Python web service. These instructions use Render for the Django service. Supabase supplies PostgreSQL, Auth and private Storage. Use a dedicated Supabase project for the fictional presentation data.
+Use **one Vercel project** for React and Django. Supabase provides PostgreSQL, Auth and Storage. Set the Vercel project **Root Directory** to the repository root and let [the root configuration](../vercel.json) control the build. Requests under `/api/` go to the Python function. The rest of the site serves the React build, including deep links.
 
 ## 1. Configure Supabase
 
@@ -10,52 +10,38 @@ Deploy the React frontend to Vercel and run Django as a separate Python web serv
 4. For Google sign-in, create a Google OAuth **Web application** and configure its consent screen. In **Authorized redirect URIs**, paste the exact Supabase Auth callback shown on the Google provider settings page, typically `https://PROJECT_REF.supabase.co/auth/v1/callback`. Paste the Google client ID and secret into Supabase’s Google provider settings. If the consent screen is in testing, add your presenter’s Google account as a test user.
 5. After Django is configured, run `python manage.py configure_storage` from a trusted environment connected to the hosted database. It creates or configures the private hostel and avatar buckets and their access policies. See the [database guide](database.md).
 
-## 2. Configure the Django web service
+## 2. Configure Vercel
 
-Create a Python web service from the repository, with **Root Directory** set to `backend`. The repository root directory must contain the project files on the deployment branch.
+Import the GitHub repository, leave **Root Directory** at the repository root, and select **Other** as the framework preset. Use Node 22 or 24. Keep the install, build and output settings in the root `vercel.json`.
 
-| Setting | Value |
+Set these in **Vercel → Project → Settings → Environment Variables** for Production.
+
+| Variable | Production value |
 | --- | --- |
-| Python | 3.12 |
-| Build | `python -m pip install -r requirements.txt && python manage.py collectstatic --noinput` |
-| Start | `gunicorn config.wsgi:application --bind 0.0.0.0:$PORT --access-logfile -` |
-| Health check | `/api/health/` |
-| One-off release step | `python manage.py migrate --noinput && python manage.py migrate --check` |
+| `DJANGO_ENV`, `DJANGO_DEBUG` | `production`, `false` |
+| `DJANGO_SECRET_KEY` | A unique high-entropy secret |
+| `DJANGO_ALLOWED_HOSTS` | Exact production hostname, without a scheme |
+| `CORS_ALLOWED_ORIGINS` | Exact HTTPS production origin |
+| `DJANGO_TRUST_PROXY_HTTPS` | `true` behind the Vercel HTTPS edge |
+| `POSTGRES_HOST`, `POSTGRES_PORT`, `POSTGRES_DB`, `POSTGRES_USER`, `POSTGRES_PASSWORD` | Supabase connection values. Use the session pooler if you need IPv4. |
+| `POSTGRES_SSLMODE`, `POSTGRES_SSLROOTCERT` | `verify-full` and a CA path. For a certificate trusted by the runtime’s system bundle, use `/etc/ssl/certs/ca-certificates.crt`. If the endpoint requires a different CA, bundle the public CA certificate and configure its path. |
+| `SUPABASE_URL`, `SUPABASE_SERVICE_ROLE_KEY` | Project HTTPS origin and backend-only legacy service-role key |
+| `SUPABASE_JWT_SECRET` | Leave empty for asymmetric JWT signing. Set it privately only for legacy HS256. |
+| `VITE_SUPABASE_URL`, `VITE_SUPABASE_PUBLISHABLE_KEY` | Same Supabase project origin and its public browser key |
+| `PRESENTATION_MODE`, `VITE_PRESENTATION_MODE` | `true` for the presentation |
+| `VITE_API_BASE_URL` | Leave unset. The production frontend uses the same-origin `/api`. |
 
-Provide the environment variables before the first build. Run the release step as a pre-deploy command on a plan that supports it, or manually from an authorized one-off shell with the same production environment. Finish migrations before sending traffic to the service. The backend ships a [Procfile](../backend/Procfile) for hosts that use one. Gunicorn serves Django, and WhiteNoise serves collected, hashed static assets.
+Keep secrets in variables without the `VITE_` prefix. Django uses JSON responses. Vercel serves the React static assets. Keep upload requests below Vercel’s 4.5 MB function request limit, including multipart overhead. Use a photo under 4 MB for the demo.
 
-| Backend variable | Production value |
-| --- | --- |
-| `DJANGO_ENV`, `DJANGO_DEBUG` | `production`, `false`. The production environment forces debug off. |
-| `DJANGO_SECRET_KEY` | A unique high-entropy value stored only as a backend secret. |
-| `DJANGO_ALLOWED_HOSTS` | The exact public backend hostname, plus any separate hostname actually used by the hosting provider’s health probe. Use hostnames without schemes. |
-| `CORS_ALLOWED_ORIGINS` | The exact HTTPS Vercel or custom frontend origins. Use a comma-separated list for multiple origins. |
-| `DJANGO_CSRF_TRUSTED_ORIGINS` | Exact HTTPS origins for any cross-origin cookie-based Django forms. The current React API uses bearer tokens. Leave this empty if no such forms are deployed. |
-| `DJANGO_TRUST_PROXY_HTTPS` | Set `true` only on a trusted HTTPS-terminating edge that sets or replaces `X-Forwarded-Proto` and prevents direct access to Gunicorn. |
-| `DJANGO_HSTS_SECONDS` | Defaults to one year in production. Enable `DJANGO_HSTS_INCLUDE_SUBDOMAINS` and `DJANGO_HSTS_PRELOAD` only after confirming the domain policy and HTTPS coverage. |
-| `POSTGRES_HOST`, `POSTGRES_PORT`, `POSTGRES_DB`, `POSTGRES_USER`, `POSTGRES_PASSWORD` | Exact Supabase values, stored securely. |
-| `POSTGRES_SSLMODE`, `POSTGRES_SSLROOTCERT` | `verify-full` and the trusted CA file’s absolute path. Render secret files can mount the CA under `/etc/secrets/`. |
-| `SUPABASE_URL` | HTTPS project origin, without a path. |
-| `SUPABASE_JWT_SECRET` | Leave empty for the project's asymmetric signing keys. Supply privately only for a legacy HS256 project. |
-| `SUPABASE_SERVICE_ROLE_KEY` | The backend-only legacy service-role key used by Storage and operator Auth checks. |
-| `PRESENTATION_MODE` | `true` for the presentation. |
-| `DEMO_SEED_ENABLED` | Keep `false`; enable briefly only when loading the isolated presentation database. |
+## 3. Run the release commands
 
-Check that HTTPS responses work through the hosting proxy, then run `python manage.py check --deploy`. A local production settings check cannot establish the provider's actual TLS and forwarding behavior. The health endpoint checks the web process. Use `migrate --check` and a real listing API request to verify database access.
+With the production backend values loaded in a trusted terminal, change into `backend/` and install its Python requirements. Run these one-off commands before using the API. Vercel function requests do not run migrations.
 
-## 3. Configure Vercel
-
-Import the project using **Root Directory** `frontend`, framework **Vite**, Node 22 or 24, install command `npm ci`, build command `npm run build`, and output directory `dist`. The included [Vercel configuration](../frontend/vercel.json) provides SPA deep links and basic headers.
-
-Set these values in Vercel’s environment settings and rebuild.
-
-- `VITE_API_BASE_URL` — Actual HTTPS backend origin with `/api` appended.
-- `VITE_SUPABASE_URL` — Same project origin as Django.
-- `VITE_SUPABASE_PUBLISHABLE_KEY` — Public browser key or legacy anon key.
-- `VITE_PRESENTATION_MODE=true` — Show presentation labels.
-- `VITE_MAP_TILE_URL` and `VITE_MAP_TILE_ATTRIBUTION` — Optional tile provider overrides. See the [maps guide](maps.md).
-
-Vite embeds these values in browser bundles. Keep every database, Auth signing, storage service-role and Google OAuth secret out of Vercel’s `VITE_` variables. Update Supabase callbacks and Django origins if the frontend domain changes.
+```bash
+python manage.py migrate --noinput
+python manage.py migrate --check
+python manage.py configure_storage
+```
 
 ## 4. Provision the administrator and presentation users
 
