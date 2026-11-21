@@ -3,6 +3,7 @@ import { useEffect, useRef, useState } from 'react'
 import { Link, NavLink, Outlet, useLocation, useNavigate } from 'react-router'
 import { useSession } from '../../contexts/SessionContext'
 import { supabase } from '../../services/supabase'
+import ThemeToggle from './ThemeToggle'
 import type { Role } from '../../types/hostel'
 
 const publicLinks = [
@@ -49,11 +50,12 @@ export default function SiteLayout({ role }: { role?: Role }) {
     <header className="public-header">
       <div className="wrap nav-bar">
         <Brand />
-        <button className="icon-btn public-menu" aria-label={open ? 'Close navigation' : 'Open navigation'} aria-expanded={open} aria-controls="public-nav" onClick={() => setOpen(!open)}>{open ? <X /> : <Menu />}</button>
         <div id="public-nav" className={open ? 'public-nav open' : 'public-nav'}>
           <nav aria-label="Main navigation">{publicLinks.map(([to, label]) => to.includes('#') ? <Link key={to} to={to} onClick={closeMenu}>{label}</Link> : <NavLink end key={to} to={to} onClick={closeMenu}>{label}</NavLink>)}</nav>
           <div className="row">{account ? <Link className="btn primary" to={`/${account.role}`} onClick={closeMenu}>My dashboard</Link> : <><Link className="btn outline" to="/login" onClick={closeMenu}>Log in</Link><Link className="btn primary" to="/register" onClick={closeMenu}>Get Started</Link></>}</div>
         </div>
+        <ThemeToggle />
+        <button className="icon-btn public-menu" aria-label={open ? 'Close navigation' : 'Open navigation'} aria-expanded={open} aria-controls="public-nav" onClick={() => setOpen(!open)}>{open ? <X /> : <Menu />}</button>
       </div>
     </header>
     <main id="main" tabIndex={-1}><Outlet /></main>
@@ -68,7 +70,7 @@ export default function SiteLayout({ role }: { role?: Role }) {
     <aside className="sidebar">{menu}</aside>
     <dialog className="sidebar-drawer" ref={drawer} aria-label="Dashboard navigation" onClose={() => setOpen(false)} onCancel={closeMenu}><div className="drawer-content"><button className="icon-btn drawer-close" aria-label="Close menu" onClick={closeMenu}><X /></button>{menu}</div></dialog>
     <div className="dashboard-body">
-      <header className="dashboard-top"><button className="icon-btn drawer-toggle" aria-label="Open dashboard menu" aria-expanded={open} onClick={() => { drawer.current?.showModal(); setOpen(true) }}><Menu /></button><span className="avatar small" title={account?.full_name ?? role}>{(account?.role === role ? account.full_name : role).slice(0, 2).toUpperCase()}</span></header>
+      <header className="dashboard-top"><button className="icon-btn drawer-toggle" aria-label="Open dashboard menu" aria-expanded={open} onClick={() => { drawer.current?.showModal(); setOpen(true) }}><Menu /></button><ThemeToggle /><span className="avatar small" title={account?.full_name ?? role}>{(account?.role === role ? account.full_name : role).slice(0, 2).toUpperCase()}</span></header>
       <main className="dashboard-content" id="main" tabIndex={-1}>
         {logoutError && <p role="alert" className="notice error">Sign-out failed. Try again.</p>}
         {loading ? <p role="status">Checking your session…</p> : account?.role === role ? <Outlet /> :

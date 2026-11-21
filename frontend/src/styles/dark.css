@@ -1,0 +1,88 @@
+@media (max-width: 820px) {
+  .nav-bar > .theme-toggle { margin-inline-start: auto; }
+}
+
+:root[data-theme="dark"] {
+  color-scheme: dark;
+  color: #f1edf9;
+  background: #151221;
+  --navy: #f1edf9;
+  --brand: #c7aaff;
+  --lavender: #241d35;
+  --purple-dark: #d1baff;
+  --line: #433951;
+  --muted: #c6bed5;
+  --shadow: 0 5px 15px #0003, 0 1px 2px #0004;
+  --dark-surface: #211b2e;
+  --dark-raised: #292138;
+  --dark-accent: #38284f;
+}
+
+[data-theme="dark"] :focus-visible { outline-color: var(--brand); }
+[data-theme="dark"] :is(.panel, .public-header, .public-nav, .sidebar, .drawer-content, .skip, .search-input) {
+  background: var(--dark-surface);
+  border-color: var(--line);
+}
+[data-theme="dark"] :is(.footer, .highlight-strip, .tinted, .hostel-photo, .map-frame, .hostel-map, .leaflet-container) {
+  background: var(--dark-raised);
+  border-color: var(--line);
+}
+[data-theme="dark"] .dashboard-shell { background: #191525; }
+[data-theme="dark"] .sidebar-role { color: var(--muted); }
+
+[data-theme="dark"] :is(input, select, textarea, .icon-btn, .btn.outline, .btn.light) {
+  background: var(--dark-surface);
+  border-color: #635573;
+  color: var(--navy);
+}
+[data-theme="dark"] .search-input :is(input, select) { background: transparent; }
+[data-theme="dark"] :is(input, textarea)::placeholder { color: #b3a9c2; }
+[data-theme="dark"] :is(input[type="checkbox"], input[type="radio"], progress) { accent-color: #9870e1; }
+[data-theme="dark"] .btn:not(.primary, .destructive, .outline, .light) { background: var(--dark-accent); }
+[data-theme="dark"] :is(.btn.outline, .btn.light, .icon-btn):hover,
+[data-theme="dark"] .icon-btn[aria-pressed="true"],
+[data-theme="dark"] .btn:not(.primary, .destructive):hover { background: #47345e; }
+[data-theme="dark"] .icon-btn.danger,
+[data-theme="dark"] .save-icon[aria-pressed="true"] { color: #ffadc1; }
+[data-theme="dark"] .count { background: #7244c4; }
+[data-theme="dark"] :is(.tile-icon, .avatar, .badge, .premium-badge, .demo-caption, .notice, .room-line, .image-empty) {
+  background: var(--dark-accent);
+  color: var(--purple-dark);
+  border-color: #624b7b;
+}
+[data-theme="dark"] .badge.success { background: #193b30; color: #9ce7bc; }
+[data-theme="dark"] .roommate-card:nth-child(3n + 2) .avatar { background: #482a38; color: #f9becb; }
+[data-theme="dark"] .roommate-card:nth-child(3n + 3) .avatar { background: #203e38; color: #a7e5cf; }
+[data-theme="dark"] :is(.notice.error, .save-error) { background: #512638; color: #ffd1dc; }
+
+[data-theme="dark"] :is(.simple-row, .quick-link):hover,
+[data-theme="dark"] .simple-row:focus-visible,
+[data-theme="dark"] .conversation:is(:hover, .active),
+[data-theme="dark"] :is(.sidebar nav, .drawer-content nav, .sidebar-end) :is(a, button):hover,
+[data-theme="dark"] :is(.sidebar, .drawer-content) nav a[aria-current="page"],
+[data-theme="dark"] a.action-card:hover { background: var(--dark-accent); }
+[data-theme="dark"] .message-scroll { background: #191525; }
+[data-theme="dark"] .bubble:not(.sent) { background: var(--dark-accent); }
+[data-theme="dark"] .skeleton {
+  background: linear-gradient(105deg, #241c33, #37294b, #241c33);
+  background-size: 250% 100%;
+}
+
+[data-theme="dark"] .hero { background: #211731; }
+[data-theme="dark"] .hero::after { background: linear-gradient(90deg, #211731 0%, #211731 33%, #211731f5 40%, #21173142 59%, transparent 73%); }
+[data-theme="dark"] .hero-copy > p { color: #d9cce9; }
+[data-theme="dark"] .hero-copy .badge,
+[data-theme="dark"] .hero-callouts > div { background: #2c213d; color: var(--navy); }
+[data-theme="dark"] .hero-callouts .hero-location svg { color: #ff9eb2; }
+@media (max-width: 570px) {
+  [data-theme="dark"] .hero::after { background: linear-gradient(180deg, #211731 0%, #211731 50%, transparent 76%); }
+}
+
+/* Style Leaflet chrome without changing the map tiles or photos. */
+[data-theme="dark"] :is(.leaflet-popup-content-wrapper, .leaflet-popup-tip, .leaflet-bar a, .leaflet-container .leaflet-control-attribution) {
+  background: var(--dark-surface);
+  color: var(--navy);
+}
+[data-theme="dark"] .leaflet-container a:not(.btn) { color: var(--purple-dark); }
+[data-theme="dark"] .leaflet-bar a:hover { background: var(--dark-accent); }
+[data-theme="dark"] .leaflet-bar a.leaflet-disabled { color: var(--muted); }
