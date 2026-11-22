@@ -1,5 +1,5 @@
 import { useState } from 'react'
-import { Link, Navigate, useSearchParams } from 'react-router'
+import { Link, Navigate, useLocation, useSearchParams } from 'react-router'
 import { Field, Heading } from '../../components/common/UI'
 import { useSession } from '../../contexts/SessionContext'
 import { ApiError, apiRequest, payload } from '../../services/api'
@@ -10,6 +10,10 @@ const callback = (path: string) => new URL(path, window.location.origin).href
 export function AuthPage({ mode, startingRole }: { mode: 'login' | 'register' | 'reset' | 'password'; startingRole?: 'student' | 'manager' }) {
   const client = supabase
   const [query] = useSearchParams()
+  const { hash } = useLocation()
+  const callbackError = [query, new URLSearchParams(hash.slice(1))].some(params =>
+    params.has('error') || params.has('error_code') || params.has('error_description'),
+  )
   const requested = query.get('next') ?? ''
   const next = /^\/(hostels|roommates)\/[0-9a-f]{8}(?:-[0-9a-f]{4}){3}-[0-9a-f]{12}\/?$/i.test(requested) ? requested : ''
   const loginQuery = `/login?${new URLSearchParams({ role: query.get('role') === 'manager' ? 'manager' : 'student', ...(next ? { next } : {}) })}`
@@ -91,6 +95,7 @@ export function AuthPage({ mode, startingRole }: { mode: 'login' | 'register' | 
         })}>Continue with Google</button>}
         <div className="row dashboard-gap">{mode === 'login' ? <><Link className="text-link" to="/reset-password">Forgot password?</Link><Link className="text-link" to={registration}>Create an account</Link></> : <Link className="text-link" to={loginQuery}>Back to login</Link>}</div>
       </>}
+    {callbackError && !account && !notice && !error && <p className="notice error" role="alert">Sign-in could not be completed. Start again from this page. If it keeps happening, contact support.</p>}
     {notice && <p className="notice" role="status">{notice}</p>}{error && <p className="notice error" role="alert">{error}</p>}
   </div></div>
 }
