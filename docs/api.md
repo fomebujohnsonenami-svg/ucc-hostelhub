@@ -2,7 +2,7 @@
 
 The frontend uses Django for application data and Supabase for sign-in. Configure `VITE_API_BASE_URL` (ending in `/api`), `VITE_SUPABASE_URL`, and `VITE_SUPABASE_PUBLISHABLE_KEY`. Configure the corresponding project's JWT settings, database connection, and private storage in Django using the [database guide](database.md). Apply all migrations before launching Django, including the default amenities and roommate moderation migrations.
 
-In Supabase Auth, enable email/password and configure the site URL and allowed redirect URLs. Include the frontend's `/login` and `/set-password` routes for confirmation and reset. Enable the Google provider if Google sign-in is offered. Use the appropriate Supabase email settings for actual email delivery. Use exact frontend origins in Django's CORS settings. Keep the Storage service-role key and database credentials on the server.
+In Supabase Auth, enable Email and configure the Magic Link email template to deliver a one-time code. See the [deployment guide](deployment.md) for the template and SMTP settings. Use exact frontend origins in Django's CORS settings. Keep the Storage service-role key and database credentials on the server.
 
 ## Administrator access
 

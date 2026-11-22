@@ -23,7 +23,7 @@ The deployment rehearsal passed in Chromium against a freshly migrated local Pos
 
 - [ ] Production migrations and verified TLS connection to Supabase PostgreSQL.
 - [ ] Vercel page loads, SPA deep-link refresh and restricted cross-origin API access.
-- [ ] Real Google sign-in and first administrator sign-in.
+- [ ] Real email-code delivery and first administrator sign-in.
 - [ ] Confirmed demonstration users sign in with their hosted Auth accounts.
 - [ ] Real Storage upload, photo display and rejection of unauthorized photo writes.
 - [ ] OpenStreetMap tiles and Google Maps directions load from the presenter’s browser.

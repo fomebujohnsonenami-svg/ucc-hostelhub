@@ -1,4 +1,4 @@
-import { Link, Route, Routes } from 'react-router'
+import { Link, Navigate, Route, Routes } from 'react-router'
 import { Empty } from '../components/common/UI'
 import AdminLayout from '../components/layout/AdminLayout'
 import ManagerLayout from '../components/layout/ManagerLayout'
@@ -28,10 +28,10 @@ export default function AppRoutes() {
       <Route path="roommates/:id" element={<RoommateDetail />} />
       <Route path="login" element={<AuthPage key="login" mode="login" />} />
       <Route path="register" element={<AuthPage key="register" mode="register" />} />
-      <Route path="reset-password" element={<AuthPage key="reset" mode="reset" />} />
+      <Route path="reset-password" element={<Navigate to="/login" replace />} />
       <Route path="onboarding/student" element={<AuthPage key="onboard-student" mode="register" />} />
       <Route path="onboarding/manager" element={<AuthPage key="onboard-manager" mode="register" startingRole="manager" />} />
-      <Route path="set-password" element={<AuthPage key="password" mode="password" />} />
+      <Route path="set-password" element={<Navigate to="/login" replace />} />
       <Route path="help" element={<HelpPage />} />
       <Route path="*" element={<div className="wrap section"><Empty title="Page not found" action={<Link className="btn primary" to="/">Back to home</Link>} /></div>} />
     </Route>

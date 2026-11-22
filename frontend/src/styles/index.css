@@ -249,7 +249,6 @@ a.action-card:hover { border-color: #bc9add; background: #fdfaff; }
 .role-choice legend { margin-bottom: .35rem; font-size: .86rem; font-weight: 720; }
 .role-choice label { display: flex; align-items: center; flex-wrap: wrap; gap: .35rem; cursor: pointer; border: 1px solid var(--line); padding: .48rem; border-radius: .55rem; font-size: .84rem; font-weight: 700; }
 .role-choice label.selected { background: #f1e9ff; border-color: #b79ad9; }
-.google-icon { font-weight: 900; color: #3367cd; font-size: 1rem; }
 .notice { padding: .6rem .7rem; background: #f3edff; color: #504067; border-radius: .55rem; font-size: .87rem; }
 .notice.error { background: #fce9eb; color: #871f39; }
 .dialog { margin: auto; width: min(100% - 2rem, 30rem); max-height: calc(100dvh - 2rem); padding: 1rem; color: var(--navy); }

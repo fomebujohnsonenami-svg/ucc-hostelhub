@@ -6,8 +6,8 @@ Use **one Vercel project** for React and Django. Supabase provides PostgreSQL, A
 
 1. Create the presentation project. In **Connect**, select the direct PostgreSQL connection if the backend host supports its network requirements, or the session pooler for IPv4. Copy the exact host, port, database and username from that panel.
 2. Obtain the trusted CA certificate for the chosen database endpoint. Configure libpq with `verify-full` and the CA path to verify both the certificate and hostname. Keep the database password and server-only Supabase key in the backend host’s secret settings.
-3. In Supabase Auth, enable email/password and set **Site URL** to the actual HTTPS frontend origin. Add the production callback paths to **Redirect URLs**. Allow `https://FRONTEND_HOST/login**` on the exact trusted frontend hostname for the app’s role and return-path query parameters, and `https://FRONTEND_HOST/set-password` for password recovery. Replace `FRONTEND_HOST` with the hostname Vercel assigns or the attached custom domain.
-4. For Google sign-in, create a Google OAuth **Web application** and configure its consent screen. In **Authorized redirect URIs**, paste the exact Supabase Auth callback shown on the Google provider settings page, typically `https://PROJECT_REF.supabase.co/auth/v1/callback`. Paste the Google client ID and secret into Supabase’s Google provider settings. If the consent screen is in testing, add your presenter’s Google account as a test user.
+3. In **Supabase → Authentication → Sign In / Providers**, enable **Email** and disable **Google**. Set **Site URL** in **URL Configuration** to your production HTTPS origin.
+4. In **Authentication → Emails → Templates → Magic Link**, change the subject to “Your UCC Hostel Hub sign-in code” and use `<p>Your verification code is <strong>{{ .Token }}</strong>.</p>` as the body. Save the template. Configure custom SMTP for delivery to public users. Supabase’s built-in mailer is restricted and intended for testing.
 5. After Django is configured, run `python manage.py configure_storage` from a trusted environment connected to the hosted database. It creates or configures the private hostel and avatar buckets and their access policies. See the [database guide](database.md).
 
 ## 2. Configure Vercel
@@ -67,7 +67,7 @@ For public browsing locally, set `SQLITE_PATH=demo.sqlite3`, run migrations and 
 
 - Browse the actual Vercel URL and reload a deep link such as `/hostels` and `/pricing`. In **Help & Support**, run **Check Django connection** and verify discovery also queries the database.
 - Check the production frontend origin is allowed and another origin receives no CORS permission. Verify HTTPS and confirm the service is running with debug off.
-- Complete Google sign-in and profile onboarding using a permitted Google account. Sign out and verify logged-out access behavior. Check the presentation administrator can open the admin dashboard.
+- Verify a real email code and complete profile onboarding, then test email-code sign-in again with the same address. Sign out and verify logged-out access behavior. Check the presentation administrator can open the admin dashboard.
 - Upload a fictional photo as the demo manager, verify it renders in the approved listing, and verify a different manager cannot modify it. Check the Storage buckets are private.
 - Rehearse the [presentation script](presentation-script.md) in the deployed browser. Confirm maps and directions load there. Check the premium modal without entering any payment details.
 - Before pushing, review the staged diff and scan with your Git host’s secret-scanning feature if available. Confirm local `.env` files and private keys are ignored. Inspect the production bundle for server-only material before publishing.
