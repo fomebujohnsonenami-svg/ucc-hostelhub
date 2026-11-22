@@ -30,6 +30,6 @@ def app(environ, start_response):
     target = next((value for key, value in reversed(params) if key == "__ucc_path"), None)
     environ["QUERY_STRING"] = urlencode([(key, value) for key, value in params if key != "__ucc_path"])
     path = environ.get("PATH_INFO", "")
-    if path in ("", "/", "/api/index", "/api/index.py") and target is not None:
+    if target is not None and (not path.startswith("/api/") or path.rstrip("/") in ("/api/index", "/api/index.py")):
         environ["PATH_INFO"] = "/api/" + target.rstrip("/") + "/"
     return django_application()(environ, start_response)

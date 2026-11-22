@@ -12,7 +12,7 @@ Use **one Vercel project** for React and Django. Supabase provides PostgreSQL, A
 
 ## 2. Configure Vercel
 
-Import the GitHub repository, leave **Root Directory** at the repository root, and select **Other** as the framework preset. Use Node 22 or 24. Keep the install, build and output settings in the root `vercel.json`.
+Import the GitHub repository, leave **Root Directory** at the repository root, and select **Other** as the framework preset. Use Node 22 or 24. The root `vercel.json` builds the frontend and Python function explicitly. Clear any dashboard build or output overrides.
 
 Set these in **Vercel → Project → Settings → Environment Variables** for Production.
 
