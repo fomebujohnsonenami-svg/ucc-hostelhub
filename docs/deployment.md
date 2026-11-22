@@ -24,7 +24,7 @@ Set these in **Vercel → Project → Settings → Environment Variables** for P
 | `CORS_ALLOWED_ORIGINS` | Exact HTTPS production origin |
 | `DJANGO_TRUST_PROXY_HTTPS` | `true` behind the Vercel HTTPS edge |
 | `POSTGRES_HOST`, `POSTGRES_PORT`, `POSTGRES_DB`, `POSTGRES_USER`, `POSTGRES_PASSWORD` | Supabase connection values. Use the session pooler if you need IPv4. |
-| `POSTGRES_SSLMODE`, `POSTGRES_SSLROOTCERT` | `verify-full` and a CA path. For a certificate trusted by the runtime’s system bundle, use `/etc/ssl/certs/ca-certificates.crt`. If the endpoint requires a different CA, bundle the public CA certificate and configure its path. |
+| `POSTGRES_SSLMODE`, `POSTGRES_SSLROOTCERT` | `verify-full` and a CA path. For a certificate trusted by the runtime’s system bundle, use `/etc/ssl/certs/ca-certificates.crt`. If the endpoint requires a different CA, paste the trusted CA PEM for that endpoint into `POSTGRES_SSLROOTCERT_PEM`. Django writes it to a temporary file and uses it instead of `POSTGRES_SSLROOTCERT`. |
 | `SUPABASE_URL`, `SUPABASE_SERVICE_ROLE_KEY` | Project HTTPS origin and backend-only legacy service-role key |
 | `SUPABASE_JWT_SECRET` | Leave empty for asymmetric JWT signing. Set it privately only for legacy HS256. |
 | `VITE_SUPABASE_URL`, `VITE_SUPABASE_PUBLISHABLE_KEY` | Same Supabase project origin and its public browser key |

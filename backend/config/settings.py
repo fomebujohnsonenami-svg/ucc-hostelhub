@@ -1,4 +1,6 @@
 import os
+import ssl
+import tempfile
 from pathlib import Path
 from urllib.parse import urlsplit
 
@@ -102,7 +104,17 @@ if os.getenv("POSTGRES_HOST"):
     postgres_options = {"sslmode": os.getenv("POSTGRES_SSLMODE", "verify-full" if PRODUCTION else "require")}
     if PRODUCTION and postgres_options["sslmode"] != "verify-full":
         raise ImproperlyConfigured("Production PostgreSQL requires POSTGRES_SSLMODE=verify-full.")
-    if os.getenv("POSTGRES_SSLROOTCERT"):
+    ca_pem = os.getenv("POSTGRES_SSLROOTCERT_PEM", "").strip()
+    if ca_pem:
+        # libpq requires a filename. Vercel functions can write to the temporary directory.
+        try:
+            ssl.SSLContext(ssl.PROTOCOL_TLS_CLIENT).load_verify_locations(cadata=ca_pem)
+        except (ssl.SSLError, ValueError):
+            raise ImproperlyConfigured("POSTGRES_SSLROOTCERT_PEM must contain a valid PEM CA certificate or bundle.") from None
+        with tempfile.NamedTemporaryFile(mode="w", prefix="ucc-postgres-ca-", suffix=".pem", delete=False) as certificate:
+            certificate.write(ca_pem + "\n")
+        postgres_options["sslrootcert"] = certificate.name
+    elif os.getenv("POSTGRES_SSLROOTCERT"):
         postgres_options["sslrootcert"] = os.environ["POSTGRES_SSLROOTCERT"]
     DATABASES = {
         "default": {
