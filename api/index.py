@@ -9,13 +9,19 @@ os.environ.setdefault("DJANGO_ENV", "production")
 
 @lru_cache(maxsize=1)
 def django_application():
+    if os.environ["DJANGO_ENV"].strip().lower() == "production":
+        # This repository's public Vercel domain is stable across deployments.
+        production_host = "ucc-hostelhub.vercel.app"
+        configured_hosts = os.getenv("DJANGO_ALLOWED_HOSTS", "").strip()
+        os.environ["DJANGO_ALLOWED_HOSTS"] = ",".join(filter(None, (production_host, configured_hosts)))
+
     from config.wsgi import application
 
     return application
 
 
 def app(environ, start_response):
-    required = ("DJANGO_SECRET_KEY", "DJANGO_ALLOWED_HOSTS", "CORS_ALLOWED_ORIGINS", "POSTGRES_HOST")
+    required = ("DJANGO_SECRET_KEY", "CORS_ALLOWED_ORIGINS", "POSTGRES_HOST")
     if os.environ["DJANGO_ENV"].strip().lower() == "production" and not all(
         os.getenv(name, "").strip() for name in required
     ):
