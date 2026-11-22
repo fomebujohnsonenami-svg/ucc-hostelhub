@@ -52,3 +52,16 @@ urlpatterns = [
     path("api/admin/reports/", moderation.Reports.as_view()),
     path("api/admin/reports/<uuid:pk>/", moderation.ReportAction.as_view()),
 ]
+
+
+def bad_request(request, exception):
+    from django.core.exceptions import DisallowedHost
+    from django.http import JsonResponse
+    from django.views.defaults import bad_request as default_bad_request
+
+    if request.path_info.startswith("/api/") and isinstance(exception, DisallowedHost):
+        return JsonResponse({"detail": "This API hostname is not allowed by the deployment."}, status=400)
+    return default_bad_request(request, exception)
+
+
+handler400 = bad_request

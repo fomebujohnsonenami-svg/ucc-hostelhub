@@ -32,6 +32,16 @@ CSRF_TRUSTED_ORIGINS = csv_env("DJANGO_CSRF_TRUSTED_ORIGINS", "")
 if PRODUCTION:
     if not ALLOWED_HOSTS or any("*" in host or host.startswith(".") for host in ALLOWED_HOSTS):
         raise ImproperlyConfigured("Production requires explicit DJANGO_ALLOWED_HOSTS.")
+    if os.getenv("VERCEL") == "1":
+        # Vercel may invoke the function on its exact deployment hostname.
+        # Use platform environment metadata, never request headers, to allow it.
+        for name in ("VERCEL_URL", "VERCEL_PROJECT_PRODUCTION_URL"):
+            host = os.getenv(name, "").strip()
+            if host and host.endswith(".vercel.app") and all(
+                part and part.isascii() and part.replace("-", "").isalnum()
+                for part in host.split(".")
+            ) and host not in ALLOWED_HOSTS:
+                ALLOWED_HOSTS.append(host)
     if not CORS_ALLOWED_ORIGINS:
         raise ImproperlyConfigured("Production requires explicit CORS_ALLOWED_ORIGINS.")
     for origin in (*CORS_ALLOWED_ORIGINS, *CSRF_TRUSTED_ORIGINS):
