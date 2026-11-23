@@ -5,7 +5,7 @@ const key = import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY?.trim()
 function managerClient() {
   if (!url || !key) return null
   try {
-    return createClient(url, key)
+    return createClient(url, key, { auth: { detectSessionInUrl: false } })
   } catch {
     return null
   }

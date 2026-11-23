@@ -28,10 +28,8 @@ export default function AppRoutes() {
       <Route path="roommates/:id" element={<RoommateDetail />} />
       <Route path="login" element={<AuthPage key="login" mode="login" />} />
       <Route path="register" element={<AuthPage key="register" mode="register" />} />
-      <Route path="reset-password" element={<AuthPage key="reset" mode="reset" />} />
       <Route path="onboarding/student" element={<AuthPage key="onboard-student" mode="register" />} />
       <Route path="onboarding/manager" element={<AuthPage key="onboard-manager" mode="register" startingRole="manager" />} />
-      <Route path="set-password" element={<AuthPage key="password" mode="password" />} />
       <Route path="help" element={<HelpPage />} />
       <Route path="*" element={<div className="wrap section"><Empty title="Page not found" action={<Link className="btn primary" to="/">Back to home</Link>} /></div>} />
     </Route>
