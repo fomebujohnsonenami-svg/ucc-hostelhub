@@ -11,7 +11,7 @@ const publicLinks = [
   ['/#how-it-works', 'How It Works'], ['/pricing', 'Pricing'],
 ]
 const roleNavigation = {
-  student: [['', 'Dashboard', House], ['/hostels', 'Find Hostels', Building2], ['/roommates', 'Find Roommate', Users], ['/messages', 'Messages', MessageSquare], ['/saved', 'Saved Hostels', Heart], ['/profile', 'Profile Settings', Settings]],
+  student: [['', 'Dashboard', House], ['/hostels', 'Find Hostels', Building2], ['/roommates', 'Find Roommate', Users], ['/messages', 'Messages', MessageSquare], ['/saved', 'Saved Hostels', Heart], ['/subscription', 'Student Premium', Crown], ['/profile', 'Profile Settings', Settings]],
   manager: [['', 'Dashboard', House], ['/hostels', 'My Hostels', Building2], ['/availability', 'Availability', BedDouble], ['/messages', 'Messages', MessageSquare], ['/subscription', 'Hostel Promotion', Crown], ['/profile', 'Profile Settings', Settings]],
   admin: [['', 'Dashboard', House], ['/users', 'User Management', Users], ['/listings', 'Listing Review', Building2], ['/verification', 'Manager Verification', ShieldCheck], ['/moderation', 'Content Moderation', ClipboardCheck]],
 } as const

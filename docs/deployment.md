@@ -6,8 +6,8 @@ Use **one Vercel project** for React and Django. Supabase provides PostgreSQL, A
 
 1. Create the presentation project. In **Connect**, select the direct PostgreSQL connection if the backend host supports its network requirements, or the session pooler for IPv4. Copy the exact host, port, database and username from that panel.
 2. Obtain the trusted CA certificate for the chosen database endpoint. Configure libpq with `verify-full` and the CA path to verify both the certificate and hostname. Keep the database password and server-only Supabase key in the backend host’s secret settings.
-3. In **Supabase → Authentication → Sign In / Providers**, enable **Email** and new user signups, turn off **Confirm email**, and keep **Google** disabled. This allows students and managers to sign up and sign in with a password without proving ownership of the email address. Manager approval remains an application step.
-4. In **Authentication → Emails → SMTP Settings**, turn off custom SMTP if your project only serves this app. In **Authentication → URL Configuration**, set **Site URL** to the production HTTPS origin and remove obsolete recovery and OAuth redirects. The app has no email-based password recovery. Existing accounts that never set a password require an administrator-assisted password setup with identity checks.
+3. In **Supabase → Authentication → Sign In / Providers**, enable **Email**, **Confirm email**, and new user signups. Keep confirmation on when offering Google alongside passwords so password signups must prove ownership of their email address. Configure SMTP for public email confirmations. Use the default **Confirm signup** template with `{{ .ConfirmationURL }}` if it was previously customized to send a code. Open the link in the browser that started signup.
+4. Enable **Google** under **Sign In / Providers** and paste the Google web OAuth client ID and secret into Supabase. In Google Cloud, add the exact Supabase callback shown by that provider as an **Authorized redirect URI**. Set the Google audience to **External** for users outside your organization. In Supabase **URL Configuration**, set **Site URL** to the production HTTPS origin and allow `https://FRONTEND_HOST/login**` on that exact hostname for the app's role and return-path parameters. The client secret stays in Supabase.
 5. After Django is configured, run `python manage.py configure_storage` from a trusted environment connected to the hosted database. It creates or configures the private hostel and avatar buckets and their access policies. See the [database guide](database.md).
 
 ## 2. Configure Vercel
@@ -22,6 +22,7 @@ Set these in **Vercel → Project → Settings → Environment Variables** for P
 | `DJANGO_SECRET_KEY` | A unique high-entropy secret |
 | `DJANGO_ALLOWED_HOSTS` | Exact production hostname, without a scheme |
 | `CORS_ALLOWED_ORIGINS` | Exact HTTPS production origin |
+| `DJANGO_CSRF_TRUSTED_ORIGINS` | Exact HTTPS production origin when needed for Django forms |
 | `DJANGO_TRUST_PROXY_HTTPS` | `true` behind the Vercel HTTPS edge |
 | `POSTGRES_HOST`, `POSTGRES_PORT`, `POSTGRES_DB`, `POSTGRES_USER`, `POSTGRES_PASSWORD` | Supabase connection values. Use the session pooler if you need IPv4. |
 | `POSTGRES_SSLMODE`, `POSTGRES_SSLROOTCERT` | `verify-full` and a CA path. For a certificate trusted by the runtime’s system bundle, use `/etc/ssl/certs/ca-certificates.crt`. If the endpoint requires a different CA, paste the trusted CA PEM for that endpoint into `POSTGRES_SSLROOTCERT_PEM`. Django writes it to a temporary file and uses it instead of `POSTGRES_SSLROOTCERT`. |
@@ -67,7 +68,7 @@ For public browsing locally, set `SQLITE_PATH=demo.sqlite3`, run migrations and 
 
 - Browse the actual Vercel URL and reload a deep link such as `/hostels` and `/pricing`. In **Help & Support**, run **Check Django connection** and verify discovery also queries the database.
 - Check the production frontend origin is allowed and another origin receives no CORS permission. Verify HTTPS and confirm the service is running with debug off.
-- Create a student and a manager account with email and password, complete each onboarding flow without an email code, and test password sign-in again. Sign out and verify logged-out access behavior. Check the presentation administrator can open the admin dashboard.
+- Test email signup, confirmation, and password sign-in. Test Google sign-in and onboarding for both roles. Sign out and verify logged-out access behavior. Check the presentation administrator can open the admin dashboard.
 - Upload a fictional photo as the demo manager, verify it renders in the approved listing, and verify a different manager cannot modify it. Check the Storage buckets are private.
 - Rehearse the [presentation script](presentation-script.md) in the deployed browser. Confirm maps and directions load there. Check the premium modal without entering any payment details.
 - Before pushing, review the staged diff and scan with your Git host’s secret-scanning feature if available. Confirm local `.env` files and private keys are ignored. Inspect the production bundle for server-only material before publishing.

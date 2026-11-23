@@ -7,6 +7,7 @@ import PremiumBadge from '../../components/premium/PremiumBadge'
 import { useSession } from '../../contexts/SessionContext'
 import { useApi } from '../../hooks/useApi'
 import { apiRequest, payload } from '../../services/api'
+import type { Catalogue } from '../../services/premium'
 import type { ApiPage } from '../../services/api'
 
 type Promotion = { id: string; name: string; area: string; eligible: boolean; featured: boolean; inquiries: number }
@@ -19,6 +20,8 @@ export default function PromotionsPage() {
   const [pending, setPending] = useState('')
   const [notice, setNotice] = useState('')
   const [error, setError] = useState('')
+  const catalogue = useApi<Catalogue>('subscription-plans/')
+  const plan = catalogue.data?.plans.find(item => item.audience === 'manager')
   const promotions = useApi<ApiPage<Promotion>>(`${endpoint}?page=${number}`, token)
 
   async function toggle(listing: Promotion) {
@@ -33,7 +36,7 @@ export default function PromotionsPage() {
 
   return <><Heading title="Hostel Promotion" action={<PremiumBadge>Manager Premium</PremiumBadge>} text="Feature approved listings and see how many inquiry conversations each hostel has received." />
     <section className="premium-banner"><div><h2>Premium promotion preview</h2><p>Featured placement and inquiry analytics are available now. Payments are coming soon.</p></div><div className="row"><button className="btn light" onClick={() => setUpgradeOpen(true)}>Upgrade to Premium</button><Link className="btn light" to="/pricing">View premium plans</Link></div></section>
-    {upgradeOpen && <PaymentPreview close={() => setUpgradeOpen(false)} />}
+    {upgradeOpen && <PaymentPreview plan={plan} close={() => setUpgradeOpen(false)} />}
     <div className="stack dashboard-gap"><Result loading={promotions.loading} error={promotions.error}>
       {notice && <p role="status" className="notice">{notice}</p>}{error && <p role="alert" className="notice error">{error}</p>}
       {promotions.data?.results.length === 0 && <Empty title="No listings to promote" action={<Link className="btn primary" to="/manager/hostels/new">Add a hostel</Link>} />}

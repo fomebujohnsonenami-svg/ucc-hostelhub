@@ -8,7 +8,7 @@
 | HTTPS redirect loops | Confirm the hosting edge sets `X-Forwarded-Proto: https`. Enable `DJANGO_TRUST_PROXY_HTTPS` only behind an edge that overwrites the header and protects the origin. |
 | PostgreSQL connection or certificate error | Check the direct connection or session pooler values in Supabase **Connect**. Confirm the CA file is readable, the hostname matches, and the configured user owns the Django tables. Keep `verify-full` enabled. |
 | Discovery returns a server error | Confirm `python manage.py migrate --check` succeeds in the deployed backend environment. Review service logs for database errors. |
-| Signup does not open onboarding | Check that Email and new user signups are enabled and Confirm email is off in Supabase. Check the runtime logs if the profile API returns an error. |
+| Signup does not open onboarding | Check that Email and new user signups are enabled. If Confirm email is on, open the confirmation link in the browser that started signup. Check the runtime logs if the profile API returns an error. |
 | Sign-in succeeds but the dashboard stays closed | Verify profile onboarding completed and the Django project matches the Supabase browser project. The route must match the role on the Django profile. |
 | Photo upload or loading fails | Confirm the private buckets are configured and the backend service role is set. Use a valid still JPEG, PNG or WebP under 5 MiB. Review the HTTP request size limit and backend logs. |
 | Map has no pins or tiles | Pins need stored coordinates on approved, published listings. Check exact filters, browser network access and tile provider configuration. The demo directions point belongs to Demo Atlantic View Hostel. |

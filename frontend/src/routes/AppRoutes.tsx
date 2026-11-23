@@ -41,6 +41,7 @@ export default function AppRoutes() {
       <Route path="roommates/setup" element={<RoommateSetup />} />
       <Route path="roommates/:id" element={<RoommateDetail student />} />
       <Route path="messages/:id?" element={<Messages role="student" />} />
+      <Route path="subscription" element={<PricingPage student />} />
       <Route path="saved" element={<HostelDirectory key="saved" student saved />} />
       <Route path="profile" element={<ProfileSettings />} />
       <Route path="help" element={<HelpPage workspace />} />

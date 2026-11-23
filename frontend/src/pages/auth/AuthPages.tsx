@@ -1,5 +1,5 @@
 import { useState } from 'react'
-import { Link, Navigate, useSearchParams } from 'react-router'
+import { Link, Navigate, useLocation, useSearchParams } from 'react-router'
 import { Field, Heading } from '../../components/common/UI'
 import { useSession } from '../../contexts/SessionContext'
 import { ApiError, apiRequest, payload } from '../../services/api'
@@ -8,11 +8,16 @@ import { supabase } from '../../services/supabase'
 export function AuthPage({ mode, startingRole }: { mode: 'login' | 'register'; startingRole?: 'student' | 'manager' }) {
   const client = supabase
   const [query] = useSearchParams()
+  const { hash } = useLocation()
+  const callbackFailed = [query, new URLSearchParams(hash.slice(1))].some(params =>
+    ['error', 'error_code', 'error_description'].some(key => params.has(key)),
+  )
   const requested = query.get('next') ?? ''
   const next = /^\/(hostels|roommates)\/[0-9a-f]{8}(?:-[0-9a-f]{4}){3}-[0-9a-f]{12}\/?$/i.test(requested) ? requested : ''
   const loginQuery = `/login?${new URLSearchParams({ role: query.get('role') === 'manager' ? 'manager' : 'student', ...(next ? { next } : {}) })}`
   const registration = next ? `/register?${new URLSearchParams({ next })}` : '/register'
   const { account, token, loading, error: profileError, refresh } = useSession()
+  const [notice, setNotice] = useState('')
   const [error, setError] = useState('')
   const [busy, setBusy] = useState(false)
   const [role, setRole] = useState(startingRole ?? (query.get('role') === 'manager' ? 'manager' : 'student'))
@@ -20,10 +25,14 @@ export function AuthPage({ mode, startingRole }: { mode: 'login' | 'register'; s
   async function run(operation: () => Promise<void>) {
     setBusy(true)
     setError('')
+    setNotice('')
     try { await operation() } catch (error) {
       setError(error instanceof Error ? error.message : 'The request could not be completed.')
     } finally { setBusy(false) }
   }
+
+  const callbackUrl = new URL('/login', window.location.origin)
+  callbackUrl.search = new URLSearchParams({ role, ...(next ? { next } : {}) }).toString()
 
   if (account?.role === 'student' && next) return <Navigate to={next} replace />
 
@@ -53,9 +62,9 @@ export function AuthPage({ mode, startingRole }: { mode: 'login' | 'register'; s
           const email = String(data.get('email')).trim()
           const password = String(data.get('password') ?? '')
           if (mode === 'register') {
-            const result = await client.auth.signUp({ email, password })
+            const result = await client.auth.signUp({ email, password, options: { emailRedirectTo: callbackUrl.href } })
             if (result.error) throw result.error
-            if (!result.data.session) throw new Error('Instant signup is unavailable. Contact support.')
+            if (!result.data.session) setNotice('If this address can be registered, check your inbox for a confirmation link.')
           } else {
             const result = await client.auth.signInWithPassword({ email, password })
             if (result.error) throw result.error
@@ -67,8 +76,16 @@ export function AuthPage({ mode, startingRole }: { mode: 'login' | 'register'; s
         {mode === 'register' && <Field label="Account role"><select value={role} onChange={event => setRole(event.target.value === 'manager' ? 'manager' : 'student')}><option value="student">Student</option><option value="manager">Hostel Manager</option></select></Field>}
         <button className="btn primary" disabled={busy}>{mode === 'login' ? 'Log in' : 'Create account'}</button>
       </form>
+        <div className="dashboard-gap">
+          <button type="button" className="btn outline" disabled={busy} onClick={() => void run(async () => {
+            const { error } = await client.auth.signInWithOAuth({ provider: 'google', options: { redirectTo: callbackUrl.href } })
+            if (error) throw error
+          })}>Continue with Google</button>
+        </div>
         <div className="row dashboard-gap">{mode === 'login' ? <Link className="text-link" to={registration}>Create an account</Link> : <Link className="text-link" to={loginQuery}>Back to login</Link>}</div>
       </>}
+    {callbackFailed && !token && !error && !notice && <p className="notice error" role="alert">Sign-in could not be completed. Please try again.</p>}
+    {notice && <p className="notice" role="status">{notice}</p>}
     {error && <p className="notice error" role="alert">{error}</p>}
   </div></div>
 }
