@@ -6,8 +6,8 @@ Use **one Vercel project** for React and Django. Supabase provides PostgreSQL, A
 
 1. Create the presentation project. In **Connect**, select the direct PostgreSQL connection if the backend host supports its network requirements, or the session pooler for IPv4. Copy the exact host, port, database and username from that panel.
 2. Obtain the trusted CA certificate for the chosen database endpoint. Configure libpq with `verify-full` and the CA path to verify both the certificate and hostname. Keep the database password and server-only Supabase key in the backend host’s secret settings.
-3. In **Supabase → Authentication → Sign In / Providers**, enable **Email** and disable **Google**. Set **Site URL** in **URL Configuration** to your production HTTPS origin.
-4. In **Authentication → Emails → Templates → Magic Link**, change the subject to “Your UCC Hostel Hub sign-in code” and use `<p>Your verification code is <strong>{{ .Token }}</strong>.</p>` as the body. Save the template. Configure custom SMTP for delivery to public users. Supabase’s built-in mailer is restricted and intended for testing.
+3. In **Supabase → Authentication → Sign In / Providers**, enable **Email** and new user signups, turn off **Confirm email**, and keep **Google** disabled. This allows students and managers to sign up and sign in with a password without proving ownership of the email address. Manager approval remains an application step.
+4. In **Authentication → URL Configuration**, set **Site URL** to the production HTTPS origin and add `https://FRONTEND_HOST/set-password` to **Redirect URLs** for optional password recovery. Replace `FRONTEND_HOST` with the production hostname. Keep SMTP configured and ensure the Reset password template contains `{{ .ConfirmationURL }}` if offering recovery, including for existing accounts created with email codes.
 5. After Django is configured, run `python manage.py configure_storage` from a trusted environment connected to the hosted database. It creates or configures the private hostel and avatar buckets and their access policies. See the [database guide](database.md).
 
 ## 2. Configure Vercel
@@ -67,7 +67,7 @@ For public browsing locally, set `SQLITE_PATH=demo.sqlite3`, run migrations and 
 
 - Browse the actual Vercel URL and reload a deep link such as `/hostels` and `/pricing`. In **Help & Support**, run **Check Django connection** and verify discovery also queries the database.
 - Check the production frontend origin is allowed and another origin receives no CORS permission. Verify HTTPS and confirm the service is running with debug off.
-- Verify a real email code and complete profile onboarding, then test email-code sign-in again with the same address. Sign out and verify logged-out access behavior. Check the presentation administrator can open the admin dashboard.
+- Create a student and a manager account with email and password, complete each onboarding flow without an email code, and test password sign-in again. Sign out and verify logged-out access behavior. Check the presentation administrator can open the admin dashboard.
 - Upload a fictional photo as the demo manager, verify it renders in the approved listing, and verify a different manager cannot modify it. Check the Storage buckets are private.
 - Rehearse the [presentation script](presentation-script.md) in the deployed browser. Confirm maps and directions load there. Check the premium modal without entering any payment details.
 - Before pushing, review the staged diff and scan with your Git host’s secret-scanning feature if available. Confirm local `.env` files and private keys are ignored. Inspect the production bundle for server-only material before publishing.
