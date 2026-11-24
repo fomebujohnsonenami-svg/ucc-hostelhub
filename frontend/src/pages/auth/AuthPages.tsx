@@ -31,6 +31,12 @@ export function AuthPage({ mode, startingRole }: { mode: 'login' | 'register'; s
     } finally { setBusy(false) }
   }
 
+  async function clearSavedSession() {
+    if (!client || !token) return
+    const { error } = await client.auth.signOut({ scope: 'local' })
+    if (error) throw error
+  }
+
   const callbackUrl = new URL('/login', window.location.origin)
   callbackUrl.search = new URLSearchParams({ role, ...(next ? { next } : {}) }).toString()
 
@@ -54,13 +60,14 @@ export function AuthPage({ mode, startingRole }: { mode: 'login' | 'register'; s
         <Field label="Account role"><select value={role} onChange={event => setRole(event.target.value === 'manager' ? 'manager' : 'student')}><option value="student">Student</option><option value="manager">Hostel Manager</option></select></Field>
         {role === 'manager' && <Field label="Business name"><input name="business" maxLength={160} required /></Field>}
         <button className="btn primary" disabled={busy}>Save profile</button>
-      </form> : profileError ? <><p role="alert">{profileError.message}</p><button className="btn outline" onClick={refresh}>Try again</button></> :
+      </form> :
       <><form className="stack" onSubmit={event => {
         event.preventDefault()
         const data = new FormData(event.currentTarget)
         void run(async () => {
           const email = String(data.get('email')).trim()
           const password = String(data.get('password') ?? '')
+          await clearSavedSession()
           if (mode === 'register') {
             const result = await client.auth.signUp({ email, password, options: { emailRedirectTo: callbackUrl.href } })
             if (result.error) throw result.error
@@ -78,12 +85,19 @@ export function AuthPage({ mode, startingRole }: { mode: 'login' | 'register'; s
       </form>
         <div className="dashboard-gap">
           <button type="button" className="btn outline" disabled={busy} onClick={() => void run(async () => {
+            await clearSavedSession()
             const { error } = await client.auth.signInWithOAuth({ provider: 'google', options: { redirectTo: callbackUrl.href } })
             if (error) throw error
           })}>Continue with Google</button>
         </div>
         <div className="row dashboard-gap">{mode === 'login' ? <Link className="text-link" to={registration}>Create an account</Link> : <Link className="text-link" to={loginQuery}>Back to login</Link>}</div>
       </>}
+    {client && !loading && !account && !newProfile && profileError && (
+      <div className="notice error dashboard-gap">
+        <p role="alert">We couldn’t load the profile for your saved session. You can retry or use the sign-in options above.</p>
+        <button type="button" className="btn outline" disabled={busy} onClick={refresh}>Retry profile</button>
+      </div>
+    )}
     {callbackFailed && !token && !error && !notice && <p className="notice error" role="alert">Sign-in could not be completed. Please try again.</p>}
     {notice && <p className="notice" role="status">{notice}</p>}
     {error && <p className="notice error" role="alert">{error}</p>}
