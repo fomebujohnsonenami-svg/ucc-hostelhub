@@ -245,6 +245,7 @@ a.action-card:hover { border-color: #bc9add; background: #fdfaff; }
 .composer textarea { flex: 1; }
 .auth-wrap { width: min(100% - 2rem, 32rem); margin-inline: auto; padding-block: clamp(2rem, 7vw, 5rem); }
 .auth-wrap .auth-google { background: #fff; color: #1f1f1f; border-color: #747775; gap: .65rem; min-height: 2.75rem; }
+.auth-google img { width: 18px; height: 18px; flex: 0 0 18px; }
 .auth-wrap .auth-google:hover { background: #f2f6fc; }
 .auth-divider { display: flex; align-items: center; gap: .75rem; margin-block: 1rem; font-size: .875rem; }
 .auth-divider::before, .auth-divider::after { content: ''; flex: 1; border-top: 1px solid currentColor; opacity: .22; }
