@@ -61,7 +61,17 @@ export function AuthPage({ mode, startingRole }: { mode: 'login' | 'register'; s
         {role === 'manager' && <Field label="Business name"><input name="business" maxLength={160} required /></Field>}
         <button className="btn primary" disabled={busy}>Save profile</button>
       </form> :
-      <><form className="stack" onSubmit={event => {
+      <>
+        <button type="button" className="btn full auth-google" disabled={busy} onClick={() => void run(async () => {
+          await clearSavedSession()
+          const { error } = await client.auth.signInWithOAuth({ provider: 'google', options: { redirectTo: callbackUrl.href } })
+          if (error) throw error
+        })}>
+          <img src="/images/google-g.svg" alt="" width="18" height="18" />
+          Continue with Google
+        </button>
+        <div className="auth-divider">or continue with email</div>
+        <form className="stack" onSubmit={event => {
         event.preventDefault()
         const data = new FormData(event.currentTarget)
         void run(async () => {
@@ -83,21 +93,8 @@ export function AuthPage({ mode, startingRole }: { mode: 'login' | 'register'; s
         {mode === 'register' && <Field label="Account role"><select value={role} onChange={event => setRole(event.target.value === 'manager' ? 'manager' : 'student')}><option value="student">Student</option><option value="manager">Hostel Manager</option></select></Field>}
         <button className="btn primary" disabled={busy}>{mode === 'login' ? 'Log in' : 'Create account'}</button>
       </form>
-        <div className="dashboard-gap">
-          <button type="button" className="btn outline" disabled={busy} onClick={() => void run(async () => {
-            await clearSavedSession()
-            const { error } = await client.auth.signInWithOAuth({ provider: 'google', options: { redirectTo: callbackUrl.href } })
-            if (error) throw error
-          })}>Continue with Google</button>
-        </div>
         <div className="row dashboard-gap">{mode === 'login' ? <Link className="text-link" to={registration}>Create an account</Link> : <Link className="text-link" to={loginQuery}>Back to login</Link>}</div>
       </>}
-    {client && !loading && !account && !newProfile && profileError && (
-      <div className="notice error dashboard-gap">
-        <p role="alert">We couldn’t load the profile for your saved session. You can retry or use the sign-in options above.</p>
-        <button type="button" className="btn outline" disabled={busy} onClick={refresh}>Retry profile</button>
-      </div>
-    )}
     {callbackFailed && !token && !error && !notice && <p className="notice error" role="alert">Sign-in could not be completed. Please try again.</p>}
     {notice && <p className="notice" role="status">{notice}</p>}
     {error && <p className="notice error" role="alert">{error}</p>}
