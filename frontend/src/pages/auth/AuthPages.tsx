@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
 import { Link, Navigate, useLocation, useSearchParams } from 'react-router'
 import { Field, Heading } from '../../components/common/UI'
 import { useSession } from '../../contexts/SessionContext'
@@ -17,6 +17,18 @@ export function AuthPage({ mode, startingRole }: { mode: 'login' | 'register'; s
   const loginQuery = `/login?${new URLSearchParams({ role: query.get('role') === 'manager' ? 'manager' : 'student', ...(next ? { next } : {}) })}`
   const registration = next ? `/register?${new URLSearchParams({ next })}` : '/register'
   const { account, token, loading, error: profileError, refresh } = useSession()
+  const [submitted, setSubmitted] = useState(false)
+  const [callbackError, setCallbackError] = useState(false)
+  const returnedFromAuth = query.get('auth_return') === '1'
+  useEffect(() => {
+    if (!client || !returnedFromAuth) return
+    let active = true
+    void client.auth.initialize().then(({ error }) => {
+      if (active && error) setCallbackError(true)
+    })
+    return () => { active = false }
+  }, [client, returnedFromAuth])
+
   const [notice, setNotice] = useState('')
   const [error, setError] = useState('')
   const [busy, setBusy] = useState(false)
@@ -38,15 +50,18 @@ export function AuthPage({ mode, startingRole }: { mode: 'login' | 'register'; s
   }
 
   const callbackUrl = new URL('/login', window.location.origin)
-  callbackUrl.search = new URLSearchParams({ role, ...(next ? { next } : {}) }).toString()
+  callbackUrl.search = new URLSearchParams({ role, auth_return: '1', ...(next ? { next } : {}) }).toString()
 
-  if (account?.role === 'student' && next) return <Navigate to={next} replace />
+  if (account) {
+    return <Navigate to={account.role === 'student' && next ? next : `/${account.role}`} replace />
+  }
 
-  const newProfile = token && profileError instanceof ApiError && profileError.status === 401
+  const newProfile = token && profileError instanceof ApiError && profileError.status === 401 &&
+    profileError.details && typeof profileError.details === 'object' &&
+    'detail' in profileError.details && profileError.details.detail === 'No application profile is available for this account.'
   return <div className="auth-wrap"><div className="panel padded">
     <Heading title={mode === 'login' ? 'Welcome back' : 'Create an account'} />
     {!client ? <p role="alert">Email sign-in is not configured for this deployment.</p> : loading ? <p role="status">Checking your session…</p> :
-      account ? <Link className="btn primary" to={`/${account.role}`}>Open your dashboard</Link> :
       newProfile ? <form className="stack" onSubmit={event => {
         event.preventDefault()
         const data = new FormData(event.currentTarget)
@@ -81,10 +96,12 @@ export function AuthPage({ mode, startingRole }: { mode: 'login' | 'register'; s
           if (mode === 'register') {
             const result = await client.auth.signUp({ email, password, options: { emailRedirectTo: callbackUrl.href } })
             if (result.error) throw result.error
+            if (result.data.session) setSubmitted(true)
             if (!result.data.session) setNotice('If this address can be registered, check your inbox for a confirmation link.')
           } else {
             const result = await client.auth.signInWithPassword({ email, password })
             if (result.error) throw result.error
+            setSubmitted(true)
           }
         })
       }}>
@@ -95,7 +112,10 @@ export function AuthPage({ mode, startingRole }: { mode: 'login' | 'register'; s
       </form>
         <div className="row dashboard-gap">{mode === 'login' ? <Link className="text-link" to={registration}>Create an account</Link> : <Link className="text-link" to={loginQuery}>Back to login</Link>}</div>
       </>}
-    {callbackFailed && !token && !error && !notice && <p className="notice error" role="alert">Sign-in could not be completed. Please try again.</p>}
+    {!loading && !error && (callbackFailed || callbackError || (returnedFromAuth && !token)) &&
+      <p className="notice error" role="alert">The sign-in link could not establish a session. Start again in this browser.</p>}
+    {(submitted || returnedFromAuth) && !newProfile && token && profileError &&
+      <p className="notice error" role="alert">Signed in, but we couldn’t load your account profile. {profileError.message}</p>}
     {notice && <p className="notice" role="status">{notice}</p>}
     {error && <p className="notice error" role="alert">{error}</p>}
   </div></div>
