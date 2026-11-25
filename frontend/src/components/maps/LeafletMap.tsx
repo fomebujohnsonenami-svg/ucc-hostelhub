@@ -1,13 +1,21 @@
+import { maplibreGL } from '@maplibre/maplibre-gl-leaflet'
+import { setWorkerUrl } from 'maplibre-gl'
+import workerUrl from 'maplibre-gl/dist/maplibre-gl-worker.mjs?worker&url'
 import { divIcon, latLngBounds } from 'leaflet'
-import { useEffect, useMemo, useState } from 'react'
+import { useCallback, useEffect, useMemo, useState } from 'react'
 import type { ReactNode } from 'react'
 import { MapContainer, Marker, Popup, TileLayer, useMap, useMapEvents } from 'react-leaflet'
 import 'leaflet/dist/leaflet.css'
+import 'maplibre-gl/dist/maplibre-gl.css'
 import type { Coordinates } from '../../types/location'
 
+setWorkerUrl(workerUrl)
+
 const ucc: Coordinates = { lat: 5.115, lng: -1.289 }
-const tileUrl: string = import.meta.env.VITE_MAP_TILE_URL || 'https://tile.openstreetmap.org/{z}/{x}/{y}.png'
+const rasterUrl: string = import.meta.env.VITE_MAP_TILE_URL || 'https://tile.openstreetmap.org/{z}/{x}/{y}.png'
 const attribution: string = import.meta.env.VITE_MAP_TILE_ATTRIBUTION || '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap contributors</a>'
+const openFreeMapStyle = 'https://tiles.openfreemap.org/styles/liberty'
+const openFreeMapAttribution = '<a href="https://openfreemap.org/">OpenFreeMap</a> · <a href="https://openmaptiles.org/">OpenMapTiles</a> · &copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap contributors</a>'
 const markerIcon = divIcon({
   className: 'hostel-pin',
   html: '<span aria-hidden="true"></span>',
@@ -35,10 +43,42 @@ function PickLocation({ center, onPosition }: { center?: Coordinates; onPosition
   return null
 }
 
+function OpenFreeMapLayer({ onReady, onUnavailable }: { onReady: () => void; onUnavailable: () => void }) {
+  const map = useMap()
+  useEffect(() => {
+    const context = document.createElement('canvas').getContext('webgl2')
+    if (!context) {
+      onUnavailable()
+      return
+    }
+    context.getExtension('WEBGL_lose_context')?.loseContext()
+
+    const layer = maplibreGL({
+      style: openFreeMapStyle,
+      attributionControl: { customAttribution: openFreeMapAttribution },
+    }).addTo(map)
+    const vectorMap = layer.getMaplibreMap()
+    vectorMap.once('load', onReady)
+    vectorMap.on('error', onUnavailable)
+    return () => {
+      vectorMap.off('load', onReady)
+      vectorMap.off('error', onUnavailable)
+      layer.remove()
+    }
+  }, [map, onReady, onUnavailable])
+  return null
+}
+
 export default function LeafletMap({ pins, label, center, fit = false, onPosition }: {
   pins: MapPin[]; label: string; center?: Coordinates; fit?: boolean; onPosition?: (position: Coordinates) => void
 }) {
   const [tileState, setTileState] = useState<'loading' | 'ready' | 'error'>('loading')
+  const [useRaster, setUseRaster] = useState(Boolean(import.meta.env.VITE_MAP_TILE_URL))
+  const onVectorReady = useCallback(() => setTileState('ready'), [])
+  const onVectorUnavailable = useCallback(() => {
+    setTileState('loading')
+    setUseRaster(true)
+  }, [])
   const tileEvents = useMemo(() => ({
     tileload: () => setTileState(current => current === 'loading' ? 'ready' : current),
     tileerror: () => setTileState('error'),
@@ -46,7 +86,8 @@ export default function LeafletMap({ pins, label, center, fit = false, onPositio
 
   return <section className="map-frame" aria-label={label}>
     <MapContainer className="hostel-map" center={center ?? ucc} zoom={center ? 16 : 14} scrollWheelZoom={false} worldCopyJump>
-      <TileLayer url={tileUrl} attribution={attribution} maxZoom={19} eventHandlers={tileEvents} />
+      {useRaster ? <TileLayer url={rasterUrl} attribution={attribution} maxZoom={19} eventHandlers={tileEvents} /> :
+        <OpenFreeMapLayer onReady={onVectorReady} onUnavailable={onVectorUnavailable} />}
       {fit && <ViewBounds pins={pins} />}
       {onPosition && <PickLocation center={center} onPosition={onPosition} />}
       {pins.map(pin => <Marker key={pin.id} position={pin.position} icon={markerIcon} title={pin.name} alt={pin.name}
