@@ -6,7 +6,7 @@ from rest_framework import generics, serializers
 from rest_framework.response import Response
 
 from apps.accounts.models import Profile
-from apps.hostels.api import approved_hostels
+from apps.hostels.api import published_hostels
 from apps.roommates.api import visible_profiles
 from apps.subscriptions.access import messaging_access
 from common.api import Page, object_data
@@ -69,7 +69,7 @@ class Conversations(generics.ListAPIView):
         data = serializer.validated_data
         hostel = None
         if "hostel" in data:
-            hostel = get_object_or_404(approved_hostels().select_related("manager"), pk=data["hostel"])
+            hostel = get_object_or_404(published_hostels().select_related("manager"), pk=data["hostel"])
             peer = hostel.manager.user_id
             kind = Conversation.Type.HOSTEL
         else:

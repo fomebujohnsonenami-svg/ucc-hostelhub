@@ -46,15 +46,14 @@ export function ManagerListings({ availability = false }: { availability?: boole
       {error && <p role="alert" className="notice error">{error}</p>}
       {listings.data?.results.length === 0 && <Empty title="No hostels yet" />}
       <div className="stack">{listings.data?.results.map(hostel => {
-        const action = hostel.publication_status === 'published' ? 'unpublish' : hostel.verification_status === 'verified' ? 'publish' :
-          ['draft', 'hidden'].includes(hostel.publication_status) ? 'submit' : null
+        const action = hostel.publication_status === 'published' ? 'unpublish' : hostel.verification_status !== 'rejected' && ['draft', 'pending'].includes(hostel.publication_status) ? 'publish' : null
         return <article className="panel padded" key={hostel.id}><div className="row between">
-          <div><h2>{hostel.name}</h2><p>{hostel.area}</p><Badge>{hostel.publication_status} · {hostel.verification_status}</Badge></div>
+          <div><h2>{hostel.name}</h2><p>{hostel.area}</p><Badge>{hostel.publication_status === 'hidden' ? 'Suspended' : hostel.publication_status === 'pending' ? 'Ready to publish' : hostel.publication_status}</Badge></div>
           <div className="row">{availability ? <Link className="btn primary" to={`${url}/${hostel.id}/availability`}>Update Availability</Link> : <>
             <Link className="btn outline" to={`${url}/${hostel.id}/edit`}>Edit Hostel</Link>
             <Link className="btn outline" to={`${url}/${hostel.id}/rooms`}>Room Types</Link>
             <Link className="btn outline" to={`${url}/${hostel.id}/photos`}>Photos</Link>
-            {action && <button className="btn outline" disabled={busy} onClick={() => void mutate(hostel, action)}>{action === 'submit' ? 'Submit for review' : action === 'publish' ? 'Publish' : 'Unpublish'}</button>}
+            {action && <button className="btn outline" disabled={busy} onClick={() => void mutate(hostel, action)}>{action === 'publish' ? 'Publish' : 'Unpublish'}</button>}
             <Link className="text-link" to={`${url}/${hostel.id}/preview`}>Preview listing</Link>
             <button className="btn outline" disabled={busy} onClick={() => setRemove(hostel)}>Delete</button>
           </>}</div></div></article>
@@ -84,7 +83,7 @@ function ListingEditor({ hostel, token }: { hostel?: ManagerListing; token: stri
   const [busy, setBusy] = useState(false)
   const amenities = useApi<string[]>('amenities/')
   const navigate = useNavigate()
-  return <><Heading title={hostel ? 'Edit Hostel' : 'Add Hostel'} text={hostel ? undefined : "Save the listing first. You can add photos later."} /><form className="panel padded stack form-width" onSubmit={async event => {
+  return <><Heading title={hostel ? 'Edit Hostel' : 'Add Hostel'} text={hostel ? undefined : "Your listing goes live when you save it. You can add photos later."} /><form className="panel padded stack form-width" onSubmit={async event => {
     event.preventDefault()
     if (busy) return
     const point = coordinates(location.latitude, location.longitude)
@@ -96,7 +95,7 @@ function ListingEditor({ hostel, token }: { hostel?: ManagerListing; token: stri
         name: String(data.get('name')), area: String(data.get('area')), address: String(data.get('address')),
         description: String(data.get('description')), amenities: amenities.data ? data.getAll('amenities').map(String) : hostel?.amenities ?? [],
       }, point)
-      void navigate(hostel ? url : `${url}/${saved.id}/rooms`, { state: { notice: hostel ? 'Listing saved.' : 'Listing submitted for review.' } })
+      void navigate(hostel ? url : `${url}/${saved.id}/rooms`, { state: { notice: hostel ? 'Listing saved.' : 'Listing published. Add room types and prices below.' } })
     } catch (error) { setError(errorText(error)) } finally { setBusy(false) }
   }}>
     <Field label="Hostel name"><input name="name" required maxLength={160} defaultValue={hostel?.name} /></Field>
@@ -212,7 +211,7 @@ function ListingPreview({ hostel, token }: { hostel: ManagerListing; token: stri
   const point = coordinates(hostel.latitude, hostel.longitude)
   return <><Heading title={hostel.name} text={`${hostel.address} · ${hostel.area}`} action={<Link className="btn outline" to={`${url}/${hostel.id}/edit`}>Edit Hostel</Link>} />
     <div className="stack">
-      <section className="panel padded"><h2>Listing preview</h2><Badge>{hostel.publication_status} · {hostel.verification_status}</Badge><p>{hostel.description}</p>
+      <section className="panel padded"><h2>Listing preview</h2><Badge>{hostel.publication_status === 'hidden' ? 'Suspended' : hostel.publication_status === 'pending' ? 'Ready to publish' : hostel.publication_status}</Badge><p>{hostel.description}</p>
         {hostel.amenities.length > 0 && <div className="row">{hostel.amenities.map(item => <Badge key={item}>{item}</Badge>)}</div>}</section>
       <section className="panel padded"><h2>Photos</h2>{hostel.images.length > 0 ? <div className="cards-grid">
         {hostel.images.map(id => <div key={id} className="hostel-photo"><PrivatePhoto path={`hostels/${hostel.id}/images/${id}/`} token={token} /></div>)}

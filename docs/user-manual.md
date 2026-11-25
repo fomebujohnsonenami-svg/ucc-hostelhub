@@ -10,10 +10,10 @@ Sign in or register, then complete a student profile. Save a hostel by selecting
 
 ## Managers
 
-Sign in and complete the manager profile. In **My Hostels**, add listing details, rooms, photos and a map position. Preview a draft there. Submit a listing for review, then publish it after approval. Open **Availability** to confirm the count for the correct room type. Review and reply to inquiries in **Messages**. **Hostel Promotion** lets you feature eligible listings and view inquiry counts. **Upgrade to Premium** opens the Coming Soon dialog.
+Sign in and complete the manager profile. In **My Hostels**, add listing details, rooms, photos and a map position. New listings go live as soon as you save them. Use Publish for an older pending listing and Unpublish to take it offline. Open **Availability** to confirm the count for the correct room type. Review and reply to inquiries in **Messages**. **Hostel Promotion** lets you feature eligible listings and view inquiry counts. **Upgrade to Premium** opens the Coming Soon dialog.
 
 ## Administrators
 
-Sign in with the administrator account provisioned by the operator. Use **Manager Verification** to review managers, **Listing Review** to approve, reject or suspend listings, and **Content Moderation** for reports. **User Management** lists registered profiles.
+Sign in with the administrator account provisioned by the operator. Use **Manager Verification** to review managers, **Listing Moderation** to suspend published listings, and **Content Moderation** for reports. **User Management** lists registered profiles.
 
 Availability is reported by managers and can become stale. Confirm it before making plans. The presentation does not process payments or reservations.

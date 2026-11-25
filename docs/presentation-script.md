@@ -17,6 +17,6 @@ Use the isolated presentation project, load the [fictional dataset](deployment.m
 | 9 | Switch to the **Demo Manager** browser profile. Open and reply to the inquiry. |
 | 10 | Open **Availability**, select the Atlantic View double room and confirm a different bed count. Refresh the student listing to show the updated count. |
 | 11 | Open **Hostel Promotion**, then choose **Upgrade to Premium** and show **Payments coming soon**. |
-| 12 | Switch to the administrator browser profile. Show platform counts, manager verification, listing review and moderation. |
+| 12 | Switch to the administrator browser profile. Show platform counts, manager verification, listing suspension and report moderation. |
 
 Recheck prices and filters if the demo records were edited during rehearsal. Keep **Help & Support** ready to verify the Django connection if a step stalls.

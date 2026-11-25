@@ -152,13 +152,11 @@ class PhaseFiveTests(TestCase):
         admin_path = f"admin/listings/{self.pending.pk}/"
         manager_path = f"manager/hostels/{self.pending.pk}/publication/"
         self.as_user(self.manager)
-        self.assertEqual(self.send("post", admin_path, {"action": "approve"}).status_code, 403)
-        self.assertEqual(self.send("post", manager_path, {"action": "publish"}).status_code, 400)
+        self.assertEqual(self.send("post", admin_path, {"action": "suspend"}).status_code, 403)
+        self.assertEqual(self.send("post", manager_path, {"action": "publish"}).status_code, 200)
         self.as_user(self.admin)
-        self.assertEqual(self.send("post", admin_path, {"action": "approve"}).status_code, 200)
         self.assertEqual(self.send("patch", f"admin/managers/{self.owner.pk}/", {"verification_status": "verified"}).status_code, 200)
         self.as_user(self.manager)
-        self.assertEqual(self.send("post", manager_path, {"action": "publish"}).status_code, 200)
         self.assertEqual(self.send("post", manager_path, {"action": "unpublish"}).status_code, 200)
         self.assertEqual(self.send("post", manager_path, {"action": "publish"}).status_code, 200)
         self.as_user(self.student)

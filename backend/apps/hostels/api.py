@@ -17,11 +17,10 @@ from .models import Amenity, Hostel, RoomType, SavedHostel
 from .operations import availability_stale, filter_hostels
 
 
-def approved_hostels():
+def published_hostels():
     return Hostel.objects.filter(
-        verification_status=VerificationStatus.VERIFIED,
         publication_status=Hostel.PublicationStatus.PUBLISHED,
-    )
+    ).exclude(verification_status=VerificationStatus.REJECTED)
 
 
 def listing_data(queryset):
@@ -87,7 +86,7 @@ class PublicHostels(generics.ListAPIView):
     pagination_class = Page
 
     def get_queryset(self):
-        queryset = approved_hostels()
+        queryset = published_hostels()
         if self.request.query_params.get("featured") == "yes":
             queryset = queryset.filter(featured=True)
         return listing_data(filter_hostels(queryset, self.request.query_params))
@@ -99,14 +98,14 @@ class PublicHostel(generics.RetrieveAPIView):
     serializer_class = PublicHostelSerializer
 
     def get_queryset(self):
-        return listing_data(approved_hostels())
+        return listing_data(published_hostels())
 
 
 @api_view(["GET"])
 @authentication_classes([])
 @permission_classes([permissions.AllowAny])
 def public_photo(request, pk, image_id):
-    hostel = get_object_or_404(approved_hostels(), pk=pk)
+    hostel = get_object_or_404(published_hostels(), pk=pk)
     image = get_object_or_404(hostel.images, pk=image_id)
     return image_response(settings.SUPABASE_HOSTEL_BUCKET, image.storage_path)
 
@@ -160,7 +159,7 @@ class ManagerHostels(OwnerAccess, generics.ListCreateAPIView):
 
     @transaction.atomic
     def perform_create(self, serializer):
-        serializer.save(manager=self.get_manager(), publication_status=Hostel.PublicationStatus.PENDING)
+        serializer.save(manager=self.get_manager(), publication_status=Hostel.PublicationStatus.PUBLISHED)
 
 
 class ManagerHostel(OwnerAccess, generics.RetrieveUpdateDestroyAPIView):
@@ -192,16 +191,17 @@ class Publication(OwnerAccess, generics.GenericAPIView):
     def post(self, request, pk):
         hostel = get_object_or_404(self.get_queryset().select_for_update(), pk=pk)
         action = object_data(request).get("action")
-        if action == "publish" and hostel.verification_status == VerificationStatus.VERIFIED:
+        if (
+            action == "publish"
+            and hostel.publication_status in {Hostel.PublicationStatus.DRAFT, Hostel.PublicationStatus.PENDING}
+            and hostel.verification_status != VerificationStatus.REJECTED
+        ):
             hostel.publication_status = Hostel.PublicationStatus.PUBLISHED
         elif action == "unpublish" and hostel.publication_status == Hostel.PublicationStatus.PUBLISHED:
             hostel.publication_status = Hostel.PublicationStatus.DRAFT
-        elif action == "submit" and hostel.publication_status in {Hostel.PublicationStatus.DRAFT, Hostel.PublicationStatus.HIDDEN} and hostel.verification_status != VerificationStatus.VERIFIED:
-            hostel.verification_status = VerificationStatus.PENDING
-            hostel.publication_status = Hostel.PublicationStatus.PENDING
         else:
             raise ValidationError({"action": "This listing cannot make that publication change."})
-        hostel.save(update_fields=["verification_status", "publication_status", "updated_at"])
+        hostel.save(update_fields=["publication_status", "updated_at"])
         return Response(self.get_serializer(hostel).data)
 
 
@@ -254,7 +254,7 @@ class SavedListings(generics.ListAPIView):
     pagination_class = Page
 
     def get_queryset(self):
-        return listing_data(approved_hostels().filter(saves__student=self.request.user)).order_by("-saves__created_at", "pk")
+        return listing_data(published_hostels().filter(saves__student=self.request.user)).order_by("-saves__created_at", "pk")
 
 
 class SavedListing(generics.GenericAPIView):
@@ -264,7 +264,7 @@ class SavedListing(generics.GenericAPIView):
         return Response({"saved": SavedHostel.objects.filter(student=request.user, hostel_id=pk).exists()})
 
     def put(self, request, pk):
-        hostel = get_object_or_404(approved_hostels(), pk=pk)
+        hostel = get_object_or_404(published_hostels(), pk=pk)
         SavedHostel.objects.get_or_create(student=request.user, hostel=hostel)
         return Response({"saved": True})
 
@@ -277,7 +277,7 @@ class SavedIds(generics.GenericAPIView):
     permission_classes = [StudentOnly]
 
     def get(self, request):
-        return Response(list(SavedHostel.objects.filter(student=request.user, hostel__in=approved_hostels()).values_list("hostel_id", flat=True)))
+        return Response(list(SavedHostel.objects.filter(student=request.user, hostel__in=published_hostels()).values_list("hostel_id", flat=True)))
 
 
 class DiscoveryOptions(generics.GenericAPIView):
@@ -285,8 +285,8 @@ class DiscoveryOptions(generics.GenericAPIView):
     authentication_classes = []
 
     def get(self, request):
-        approved = approved_hostels()
+        published = published_hostels()
         return Response({
-            "areas": list(approved.order_by("area").values_list("area", flat=True).distinct()),
-            "room_types": list(RoomType.objects.filter(hostel__in=approved).order_by("name").values_list("name", flat=True).distinct()),
+            "areas": list(published.order_by("area").values_list("area", flat=True).distinct()),
+            "room_types": list(RoomType.objects.filter(hostel__in=published).order_by("name").values_list("name", flat=True).distinct()),
         })

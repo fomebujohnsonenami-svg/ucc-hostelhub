@@ -7,7 +7,7 @@ The public **Pricing** page reads its catalogue from Django. Student Premium is 
 1. Apply the Django migrations with `python manage.py migrate --noinput` in `backend/`. This adds the featured-listing field and seeds the two pricing catalogue rows.
 2. Set `PRESENTATION_MODE=true` in the backend environment and `VITE_PRESENTATION_MODE=true` in the frontend environment. Restart Django and Vite or rebuild the production frontend.
 3. Use an existing student and manager account. Open **Pricing**, then contact a hostel manager from a published listing or message a student from a public roommate profile. Sign-in returns students to the intended listing or profile.
-4. In the manager workspace, open **Hostel Promotion**. Feature an owned, approved, published listing and check its inquiry conversation count. The featured listing appears on the homepage and in the promoted section of matching discovery results. Suspended listings lose their featured placement.
+4. In the manager workspace, open **Hostel Promotion**. Feature an owned, published listing and check its inquiry conversation count. The featured listing appears on the homepage and in the promoted section of matching discovery results. Suspended listings lose their featured placement.
 
 `GET /api/subscription-plans/` returns the public catalogue and the server access mode. A frontend configuration flag changes only presentation labels. Django independently requires valid account roles, conversation membership and listing ownership. Messaging and promotion remain open in both server modes while the launch preview runs.
 

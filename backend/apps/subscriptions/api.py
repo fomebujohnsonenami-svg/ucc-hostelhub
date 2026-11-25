@@ -28,7 +28,7 @@ class Plans(generics.GenericAPIView):
 
 
 def eligible_for_promotion(hostel):
-    return hostel.publication_status == Hostel.PublicationStatus.PUBLISHED and hostel.verification_status == VerificationStatus.VERIFIED
+    return hostel.publication_status == Hostel.PublicationStatus.PUBLISHED and hostel.verification_status != VerificationStatus.REJECTED
 
 
 class PromotionSerializer(serializers.ModelSerializer):
@@ -69,7 +69,7 @@ class Promotion(generics.GenericAPIView):
         serializer.is_valid(raise_exception=True)
         featured = serializer.validated_data["featured"]
         if featured and not eligible_for_promotion(hostel):
-            raise serializers.ValidationError({"featured": "Only approved, published listings can be featured."})
+            raise serializers.ValidationError({"featured": "Only published listings can be featured."})
         hostel.featured = featured
         hostel.save(update_fields=["featured"])
         return Response({"featured": hostel.featured})

@@ -3,7 +3,7 @@ from rest_framework import generics, serializers
 from rest_framework.response import Response
 
 from apps.accounts.models import ManagerProfile, Profile
-from apps.hostels.api import PublicHostelSerializer, approved_hostels, listing_data
+from apps.hostels.api import PublicHostelSerializer, published_hostels, listing_data
 from apps.hostels.models import Hostel, RoomType
 from apps.messaging.models import Conversation
 from apps.moderation.models import ModerationReport
@@ -29,7 +29,7 @@ class StudentDashboard(generics.GenericAPIView):
     permission_classes = [StudentOnly]
 
     def get(self, request):
-        hostels = approved_hostels()
+        hostels = published_hostels()
         return Response({
             "saved": hostels.filter(saves__student=request.user).count(),
             "conversations": Conversation.objects.filter(participants=request.user).count(),
@@ -55,7 +55,7 @@ class AdminDashboard(generics.GenericAPIView):
     def get(self, request):
         return Response({
             "users": Profile.objects.count(),
-            "listings": Hostel.objects.filter(publication_status=Hostel.PublicationStatus.PENDING).count(),
+            "listings": published_hostels().count(),
             "verification": ManagerProfile.objects.filter(verification_status="pending").count(),
             "moderation": ModerationReport.objects.filter(status__in=("open", "reviewing")).count(),
         })

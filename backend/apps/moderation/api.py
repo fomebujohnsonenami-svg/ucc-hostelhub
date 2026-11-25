@@ -6,7 +6,7 @@ from rest_framework.exceptions import ValidationError
 from rest_framework.response import Response
 
 from apps.accounts.models import ManagerProfile, Profile
-from apps.hostels.api import approved_hostels
+from apps.hostels.api import published_hostels
 from apps.hostels.models import Hostel
 from apps.messaging.models import Message
 from apps.roommates.api import visible_profiles
@@ -74,15 +74,12 @@ class ListingAction(generics.GenericAPIView):
     def post(self, request, pk):
         hostel = get_object_or_404(Hostel.objects.select_for_update(), pk=pk)
         action = object_data(request).get("action")
-        if action in ("approve", "reject") and hostel.publication_status == Hostel.PublicationStatus.PENDING:
-            hostel.verification_status = VerificationStatus.VERIFIED if action == "approve" else VerificationStatus.REJECTED
-            hostel.publication_status = Hostel.PublicationStatus.DRAFT
-        elif action == "suspend" and hostel.publication_status == Hostel.PublicationStatus.PUBLISHED:
+        if action == "suspend" and hostel.publication_status == Hostel.PublicationStatus.PUBLISHED:
             hostel.verification_status = VerificationStatus.REJECTED
             hostel.publication_status = Hostel.PublicationStatus.HIDDEN
             hostel.featured = False
         else:
-            raise ValidationError({"action": "That review action is unavailable for this listing."})
+            raise ValidationError({"action": "That moderation action is unavailable for this listing."})
         hostel.save(update_fields=["verification_status", "publication_status", "featured", "updated_at"])
         return Response(ReviewListing(hostel).data)
 
@@ -156,7 +153,7 @@ class ReportContent(generics.CreateAPIView):
     def perform_create(self, serializer):
         data = serializer.validated_data
         visible = {
-            "hostel": approved_hostels,
+            "hostel": published_hostels,
             "roommate": visible_profiles,
             "message": lambda: Message.objects.filter(conversation__participants=self.request.user),
             "profile": lambda: Profile.objects.filter(pk=self.request.user.pk),

@@ -11,7 +11,7 @@
 | Signup does not open onboarding | Check the Django registration response. Apply migrations and verify the database connection if signup returns a server error. Check the runtime logs if the profile API returns an error. |
 | Sign-in succeeds but the dashboard stays closed | Verify profile onboarding completed and the Django project matches the Supabase browser project. The route must match the role on the Django profile. |
 | Photo upload or loading fails | Confirm the private buckets are configured and the backend service role is set. Use a valid still JPEG, PNG or WebP under 5 MiB. Review the HTTP request size limit and backend logs. |
-| Map has no pins or tiles | Pins need stored coordinates on approved, published listings. Check exact filters, browser network access and tile provider configuration. The demo directions point belongs to Demo Atlantic View Hostel. |
+| Map has no pins or tiles | Pins need stored coordinates on published listings. Check exact filters, browser network access and tile provider configuration. The demo directions point belongs to Demo Atlantic View Hostel. |
 | Demo seed command refuses to run | Use persistent SQLite in debug mode for local browsing. Hosted seeding requires a dedicated PostgreSQL presentation project, both backend flags, three distinct confirmed Auth users, and fresh or matching demo profiles. |
 | Browser build rejects the Supabase key | Use the project's public publishable key or legacy anon key. Keep service-role and signing keys on the backend. |
 

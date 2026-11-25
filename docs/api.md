@@ -10,12 +10,12 @@ Public onboarding permits student and manager accounts. Provision the first admi
 
 ## Workflow and API reference
 
-Endpoints below are relative to `/api/`. Protected calls carry a Supabase bearer token. Django determines identity and role from the token and the corresponding profile. Discovery, public roommate search, and approved photos are public. Application tables remain inaccessible through the Supabase Data API.
+Endpoints below are relative to `/api/`. Protected calls carry a Django-issued bearer token. Django determines identity and role from the token and the corresponding profile. Discovery, public roommate search, and photos on published listings are public. Application tables remain inaccessible through the Supabase Data API.
 
 | Endpoints | Purpose |
 | --- | --- |
 | `auth/register/`, `auth/login/`, `auth/logout/`, `me/` | Register, sign in, sign out, and read or edit your profile |
-| `hostels/`, `hostels/<id>/`, `hostel-filters/`, `amenities/` | Approved discovery and filter options |
+| `hostels/`, `hostels/<id>/`, `hostel-filters/`, `amenities/` | Published hostel discovery and filter options |
 | `saved-hostels/`, `saved-hostels/<id>/`, `saved-hostels/ids/` | Student favourites and saved state |
 | `manager/hostels/`, `manager/hostels/<id>/`, `manager/hostels/<id>/publication/` | Owner-only listing management |
 | `manager/hostels/<id>/rooms/`, `manager/hostels/<id>/rooms/<room>/` | Owner-only room types, semester prices and availability |
@@ -23,11 +23,11 @@ Endpoints below are relative to `/api/`. Protected calls carry a Supabase bearer
 | `roommates/`, `roommates/<id>/`, `roommates/me/` | Visible roommate matching and the student's own profile |
 | `conversations/`, `conversations/<id>/`, `conversations/<id>/messages/`, `conversations/<id>/read/` | Participant-only conversation access, message history, and read position |
 | `dashboard/student/`, `dashboard/manager/`, `dashboard/admin/` | Role-scoped database metrics |
-| `reports/`, `admin/listings/`, `admin/managers/`, `admin/users/`, `admin/reports/` | Reporting, review, verification, and moderation |
+| `reports/`, `admin/listings/`, `admin/managers/`, `admin/users/`, `admin/reports/` | Reporting, manager verification, and moderation |
 
 Discovery filters include `q`, `area`, `min`, `max`, `room`, `available=yes`, repeated `amenity`, and `sort=latest|low|high`. Price and availability filters match the same room type. Budget bounds apply to semester prices. Paginated APIs accept `page` and `page_size` and return `count`, `next`, `previous`, and `results`.
 
-New listings wait for review. Approval makes a listing eligible for publication by its owner. A suspended or rejected listing must be submitted and approved again before publishing. Listing and room deletion require JSON `{"confirm":true}`. Capacity is room count times beds per room. Setting available beds records the manager's confirmation time. `AVAILABILITY_STALE_HOURS` defaults to 48. Reported availability is an estimate maintained by the manager.
+New listings go live when the manager saves them. Owners can publish or unpublish their listings. Listings suspended by moderation stay hidden. Listing and room deletion require JSON `{"confirm":true}`. Capacity is room count times beds per room. Setting available beds records the manager's confirmation time. `AVAILABILITY_STALE_HOURS` defaults to 48. Reported availability is an estimate maintained by the manager.
 
 Roommate ranking awards three points for an overlapping budget, two for a matching area, and one per shared lifestyle preference. Only published, unmoderated roommate profiles are searchable. Messages poll every five seconds. Read requests name the newest message the user has seen, so unseen messages remain unread. Moderators can redact a reported message through its report without reading the conversation history.
 

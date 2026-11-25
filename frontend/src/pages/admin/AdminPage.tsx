@@ -12,7 +12,7 @@ import type { Account } from '../../contexts/SessionContext'
 type Section = 'users' | 'listings' | 'verification' | 'moderation'
 const config = {
   users: { title: 'User Management', endpoint: 'users', icon: Users },
-  listings: { title: 'Hostel Listing Review', endpoint: 'listings', icon: Building2 },
+  listings: { title: 'Hostel Listing Moderation', endpoint: 'listings', icon: Building2 },
   verification: { title: 'Manager Verification', endpoint: 'managers', icon: ShieldCheck },
   moderation: { title: 'Content Moderation', endpoint: 'reports', icon: ClipboardCheck },
 }
@@ -29,7 +29,7 @@ export default function AdminPage({ section }: { section?: Section }) {
 function Dashboard() {
   const { token } = useSession()
   const stats = useApi<Record<Section, number>>('dashboard/admin/', token)
-  return <><Heading title="Administrator Dashboard" text="Review listings, manager accounts, and reported content." /><Result loading={stats.loading} error={stats.error}>
+  return <><Heading title="Administrator Dashboard" text="Manage published listings, manager accounts, and reported content." /><Result loading={stats.loading} error={stats.error}>
     <div className="action-grid">{(Object.keys(config) as Section[]).map(section => {
       const { icon: Icon, title } = config[section]
       return <Link className="panel action-card" key={section} to={`/admin/${section}`}><span className="tile-icon"><Icon size={20} /></span><strong className="stat-value">{stats.data?.[section] ?? '—'}</strong><small>{title}</small></Link>
@@ -50,9 +50,10 @@ function Records({ section }: { section: Section }) {
   function review(next: Action) { setAction(next); setError(''); setNotice('') }
   function body(record: RecordTypes) {
     if ('manager_name' in record) return <><h2>{record.name}</h2><p>{record.area} · {record.address} · {record.manager_name}</p><p>{record.description}</p>
-      <Badge>{record.publication_status} · {record.verification_status}</Badge>
-      <div className="row dashboard-gap">{(record.publication_status === 'pending' ? ['approve', 'reject'] : record.publication_status === 'published' ? ['suspend'] : []).map(value =>
-        <button className="btn outline" key={value} onClick={() => review({ title: `${value[0].toUpperCase()}${value.slice(1)} listing`, id: record.id, method: 'POST', body: { action: value } })}>{value[0].toUpperCase() + value.slice(1)}</button>)}</div></>
+      <Badge>{record.publication_status}</Badge>
+      {record.publication_status === 'published' && <div className="row dashboard-gap">
+        <button className="btn outline" onClick={() => review({ title: 'Suspend listing', id: record.id, method: 'POST', body: { action: 'suspend' } })}>Suspend</button>
+      </div>}</>
     if ('business_name' in record) return <><h2>{record.business_name}</h2><p>{record.full_name}</p><Badge>{record.verification_status}</Badge>
       <div className="row dashboard-gap"><button className="btn outline" onClick={() => review({ title: 'Verify manager', id: record.id, method: 'PATCH', body: { verification_status: 'verified' }, notes: record.verification_notes })}>Verify manager</button>
       <button className="btn outline" onClick={() => review({ title: 'Reject manager verification', id: record.id, method: 'PATCH', body: { verification_status: 'rejected' }, notes: record.verification_notes })}>Reject verification</button></div></>

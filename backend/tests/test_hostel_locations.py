@@ -43,11 +43,11 @@ class HostelLocationTests(TestCase):
         self.manager_hostels = reverse("manager-hostels")
         self.detail = reverse("manager-hostel", args=[self.approved.pk])
 
-    def test_public_api_returns_only_approved_listings_with_exact_values(self):
+    def test_public_api_returns_only_public_listings_with_exact_values(self):
         response = self.client.get(reverse("public-hostels"))
         self.assertEqual(response.status_code, 200)
         listings = {item["id"]: item for item in response.json()["results"]}
-        self.assertEqual(set(listings), {str(self.approved.pk), str(self.unlocated.pk)})
+        self.assertEqual(set(listings), {str(self.approved.pk), str(self.unlocated.pk), str(self.unverified.pk)})
         located = listings[str(self.approved.pk)]
         self.assertEqual((located["latitude"], located["longitude"]), ("5.125001", "-1.296002"))
         self.assertEqual(located["room_types"][0]["available_beds"], 3)
@@ -56,7 +56,7 @@ class HostelLocationTests(TestCase):
         self.assertEqual(self.client.get(reverse("public-hostel", args=[self.pending.pk])).status_code, 404)
 
     @patch("common.image_views.fetch_image", return_value=b"test cover")
-    def test_public_photo_respects_approval_and_hostel_membership(self, fetch):
+    def test_public_photo_respects_publication_and_hostel_membership(self, fetch):
         self.assertEqual(self.client.get(reverse("public-hostel-photo", args=[self.approved.pk, self.cover.pk])).content, b"test cover")
         self.assertEqual(self.client.get(reverse("public-hostel-photo", args=[self.pending.pk, self.private_cover.pk])).status_code, 404)
         self.assertEqual(self.client.get(reverse("public-hostel-photo", args=[self.approved.pk, self.private_cover.pk])).status_code, 404)
@@ -75,7 +75,7 @@ class HostelLocationTests(TestCase):
         self.approved.refresh_from_db()
         self.assertEqual(self.approved.latitude, Decimal("5.125001"))
 
-    def test_manager_creates_pending_listing_and_persists_location(self):
+    def test_manager_publishes_new_listing_and_persists_location(self):
         self.client.force_authenticate(self.owner)
         response = self.client.post(self.manager_hostels, {
             "name": "New fixture", "description": "Example", "address": "Fixture address", "area": "Test area",
@@ -84,7 +84,11 @@ class HostelLocationTests(TestCase):
         self.assertEqual(response.status_code, 201, response.json())
         listing = Hostel.objects.get(pk=response.json()["id"])
         self.assertEqual(listing.manager, self.manager)
-        self.assertEqual(listing.publication_status, "pending")
+        self.assertEqual(listing.publication_status, "published")
+        self.assertEqual(listing.verification_status, VerificationStatus.PENDING)
+        public_response = APIClient().get(reverse("public-hostel", args=[listing.pk]))
+        self.assertEqual(public_response.status_code, 200)
+        self.assertEqual(public_response.json()["latitude"], "5.123456")
         self.assertEqual(listing.longitude, Decimal("-1.234567"))
         update = self.client.patch(self.detail, {"latitude": "0", "longitude": "0"}, format="json")
         self.assertEqual(update.status_code, 200, update.json())
