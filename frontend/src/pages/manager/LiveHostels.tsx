@@ -84,7 +84,7 @@ function ListingEditor({ hostel, token }: { hostel?: ManagerListing; token: stri
   const [busy, setBusy] = useState(false)
   const amenities = useApi<string[]>('amenities/')
   const navigate = useNavigate()
-  return <><Heading title={hostel ? 'Edit Hostel' : 'Add Hostel'} /><form className="panel padded stack form-width" onSubmit={async event => {
+  return <><Heading title={hostel ? 'Edit Hostel' : 'Add Hostel'} text={hostel ? undefined : "Save the listing first. You can add photos later."} /><form className="panel padded stack form-width" onSubmit={async event => {
     event.preventDefault()
     if (busy) return
     const point = coordinates(location.latitude, location.longitude)

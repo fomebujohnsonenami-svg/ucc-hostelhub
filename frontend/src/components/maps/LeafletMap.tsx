@@ -27,8 +27,11 @@ function ViewBounds({ pins }: { pins: MapPin[] }) {
   return null
 }
 
-function PickLocation({ onPosition }: { onPosition: (position: Coordinates) => void }) {
-  useMapEvents({ click: event => onPosition(event.latlng.wrap()) })
+function PickLocation({ center, onPosition }: { center?: Coordinates; onPosition: (position: Coordinates) => void }) {
+  const map = useMapEvents({ click: event => onPosition(event.latlng.wrap()) })
+  useEffect(() => {
+    if (center && !map.getBounds().contains(center)) map.setView(center, 16)
+  }, [center, map])
   return null
 }
 
@@ -45,7 +48,7 @@ export default function LeafletMap({ pins, label, center, fit = false, onPositio
     <MapContainer className="hostel-map" center={center ?? ucc} zoom={center ? 16 : 14} scrollWheelZoom={false} worldCopyJump>
       <TileLayer url={tileUrl} attribution={attribution} maxZoom={19} eventHandlers={tileEvents} />
       {fit && <ViewBounds pins={pins} />}
-      {onPosition && <PickLocation onPosition={onPosition} />}
+      {onPosition && <PickLocation center={center} onPosition={onPosition} />}
       {pins.map(pin => <Marker key={pin.id} position={pin.position} icon={markerIcon} title={pin.name} alt={pin.name}
         draggable={Boolean(onPosition)} eventHandlers={onPosition ? { dragend: event => onPosition(event.target.getLatLng().wrap()) } : undefined}>
         {pin.content && <Popup maxWidth={250}>{pin.content}</Popup>}
