@@ -5,12 +5,11 @@ from django.conf import settings
 from django.core.management.base import BaseCommand, CommandError
 from django.db import connection, transaction
 
-from apps.accounts.models import ManagerProfile, Profile
+from apps.accounts.models import LocalCredential, ManagerProfile, Profile
 from apps.hostels.models import Amenity, Hostel, RoomType, SavedHostel
 from apps.messaging.models import Conversation, ConversationParticipant, Message
 from apps.roommates.models import RoommateProfile
 from common.models import VerificationStatus
-from common.supabase_admin import verified_auth_user
 
 STUDENT_ID = UUID("b6f76c2a-dfa1-4e43-aea3-e96067aca208")
 MANAGER_ID = UUID("0ca829dd-ebc5-41e0-b241-92aba191743a")
@@ -37,15 +36,20 @@ class Command(BaseCommand):
     help = "Seed five fictional hostels and associated presentation records."
 
     def add_arguments(self, parser):
-        for argument in ("manager-auth-id", "student-auth-id", "peer-auth-id"):
+        for argument in ("manager-profile-id", "student-profile-id", "peer-profile-id"):
             parser.add_argument(f"--{argument}")
 
     def handle(self, *args, **options):
-        ids = [options[name] for name in ("manager_auth_id", "student_auth_id", "peer_auth_id")]
+        ids = [options[name] for name in ("manager_profile_id", "student_profile_id", "peer_profile_id")]
         if any(ids):
             if not all(ids) or not settings.DEMO_SEED_ENABLED or not settings.PRESENTATION_MODE or connection.vendor != "postgresql":
-                raise CommandError("Hosted seeding requires all three Auth UUIDs, PostgreSQL, DEMO_SEED_ENABLED and PRESENTATION_MODE.")
-            ids = [verified_auth_user(user_id) for user_id in ids]
+                raise CommandError("Hosted seeding requires all three profile UUIDs, PostgreSQL, DEMO_SEED_ENABLED and PRESENTATION_MODE.")
+            try:
+                ids = [UUID(str(user_id)) for user_id in ids]
+            except ValueError:
+                raise CommandError("Enter valid profile UUIDs.") from None
+            if LocalCredential.objects.filter(profile_id__in=ids).count() != 3:
+                raise CommandError("Sign up for three separate Hostel Hub demo accounts first.")
         elif settings.DEBUG and connection.vendor == "sqlite" and "memory" not in str(connection.settings_dict["NAME"]):
             ids = [item[0] for item in ACCOUNTS]
         else:
@@ -65,13 +69,16 @@ class Command(BaseCommand):
                 "username": username, "full_name": full_name, "role": role,
             })
             if (profile.username, profile.full_name, profile.role) != (username, full_name, role):
-                raise CommandError(f"Use a fresh Auth account or the exact existing demonstration profile for {username}.")
+                raise CommandError(f"Use the specified name, role, and username for {username}.")
             profiles.append(profile)
 
         owner, student, peer = profiles
         manager, _ = ManagerProfile.objects.get_or_create(user=owner, defaults={
             "business_name": "Demo Hostel Management", "verification_status": VerificationStatus.VERIFIED,
         })
+        if manager.verification_status != VerificationStatus.VERIFIED:
+            manager.verification_status = VerificationStatus.VERIFIED
+            manager.save(update_fields=["verification_status"])
         first = None
         for index, (name, area, counts, prices) in enumerate(HOSTELS):
             hostel_id = HOSTEL_ID if index == 0 else uuid5(HOSTEL_ID, name)

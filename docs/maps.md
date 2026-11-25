@@ -7,7 +7,7 @@ The map centers on the UCC area if there are no markers. The details page uses t
 ## Connect a live manager account
 
 1. Follow the [database setup guide](database.md) to configure Supabase PostgreSQL, Auth and Django. The existing coordinate fields are nullable decimals with six fractional digits. No map migration is needed beyond the existing Django migrations.
-2. Set `VITE_API_BASE_URL` to the Django API root, `VITE_SUPABASE_URL` to the Supabase project origin, and `VITE_SUPABASE_PUBLISHABLE_KEY` to the project's public browser key. Only enter a publishable or legacy anon key here. Keep service-role and database credentials on the backend.
+2. Set `VITE_API_BASE_URL` to the Django API root for local development. Keep service-role and database credentials on the backend.
 3. Sign in with a Supabase account and open **Manager → My Hostels**. Sign-in and onboarding create a Django `Profile` and `ManagerProfile` for new manager accounts. The form uses the Supabase session bearer token.
 4. Use **Add Hostel** or **Edit Hostel**. Click the map, drag the marker, or type both coordinates. Saving a new listing creates a pending record. An administrator approves the listing, then the owner publishes it from **My Hostels**.
 

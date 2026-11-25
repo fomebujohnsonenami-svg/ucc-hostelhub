@@ -49,7 +49,7 @@ On Linux and macOS, use `python3 -m venv .venv`, `.venv/bin/python`, `cp`, and `
 - Set the frontend Supabase project URL and public browser key, and configure the matching backend token verification. Follow the [API guide](docs/api.md).
 - Register and confirm a student or manager account. Finish onboarding to create the Django profile. Bootstrap an administrator using the trusted server procedure in the API guide.
 - A manager submits a listing for review. An administrator approves it, then the owner publishes it.
-- In local SQLite development, run `python manage.py seed_demo` to create labelled database fixtures. Those records do not sign in with Supabase. The site's hero image is illustrative.
+- In local SQLite development, run `python manage.py seed_demo` to create labelled database fixtures. Those fixture profiles have no login credentials. Register separate local accounts to test sign-in. The site's hero image is illustrative.
 - Payment checkout remains a preview.
 
 ## Configuration

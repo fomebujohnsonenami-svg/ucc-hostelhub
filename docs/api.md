@@ -1,8 +1,8 @@
 # Core API and account setup
 
-The frontend uses Django for application data and Supabase for sign-in. Configure `VITE_API_BASE_URL` (ending in `/api`), `VITE_SUPABASE_URL`, and `VITE_SUPABASE_PUBLISHABLE_KEY`. Configure the corresponding project's JWT settings, database connection, and private storage in Django using the [database guide](database.md). Apply all migrations before launching Django, including the default amenities and roommate moderation migrations.
+Django manages accounts and API access. Supabase supplies PostgreSQL and private Storage. Configure the backend using the [database guide](database.md) and apply migrations before launching Django.
 
-In Supabase Auth, enable the Email and Google providers and configure the callback allowlist. See the [deployment guide](deployment.md) for confirmation and OAuth setup. Use exact frontend origins in Django's CORS settings. Keep the Storage service-role key and database credentials on the server.
+Call `auth/register/` with email, password, full name, username, role, and a business name for managers. Public registration accepts student and manager roles. Call `auth/login/` with email and password. Both return a session token to send as `Authorization: Bearer TOKEN` on protected requests. `auth/logout/` revokes the current token. Use the [deployment guide](deployment.md) to provision administrators.
 
 ## Administrator access
 
@@ -14,7 +14,7 @@ Endpoints below are relative to `/api/`. Protected calls carry a Supabase bearer
 
 | Endpoints | Purpose |
 | --- | --- |
-| `onboarding/`, `me/` | Provision a profile for a verified user or read and edit their own profile |
+| `auth/register/`, `auth/login/`, `auth/logout/`, `me/` | Register, sign in, sign out, and read or edit your profile |
 | `hostels/`, `hostels/<id>/`, `hostel-filters/`, `amenities/` | Approved discovery and filter options |
 | `saved-hostels/`, `saved-hostels/<id>/`, `saved-hostels/ids/` | Student favourites and saved state |
 | `manager/hostels/`, `manager/hostels/<id>/`, `manager/hostels/<id>/publication/` | Owner-only listing management |

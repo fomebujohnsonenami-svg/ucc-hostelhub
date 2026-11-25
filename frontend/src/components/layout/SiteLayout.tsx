@@ -2,7 +2,7 @@ import { BedDouble, Building2, CircleHelp, ClipboardCheck, Crown, Heart, House, 
 import { useEffect, useRef, useState } from 'react'
 import { Link, NavLink, Outlet, useLocation, useNavigate } from 'react-router'
 import { useSession } from '../../contexts/SessionContext'
-import { supabase } from '../../services/supabase'
+import { ApiError, apiRequest } from '../../services/api'
 import ThemeToggle from './ThemeToggle'
 import type { Role } from '../../types/hostel'
 
@@ -25,7 +25,7 @@ export default function SiteLayout({ role }: { role?: Role }) {
   const drawer = useRef<HTMLDialogElement>(null)
   const location = useLocation()
   const navigate = useNavigate()
-  const { account, token, loading, error } = useSession()
+  const { account, token, loading, error, setToken } = useSession()
   const [logoutError, setLogoutError] = useState(false)
 
   useEffect(() => {
@@ -39,8 +39,12 @@ export default function SiteLayout({ role }: { role?: Role }) {
   function closeMenu() { drawer.current?.close(); setOpen(false) }
 
   async function logout() {
-    const result = await supabase?.auth.signOut({ scope: 'local' })
-    if (result?.error) { setLogoutError(true); return }
+    try {
+      await apiRequest('auth/logout/', { method: 'POST' }, token)
+    } catch (error) {
+      if (!(error instanceof ApiError && error.status === 401)) { setLogoutError(true); return }
+    }
+    setToken()
     closeMenu()
     void navigate('/')
   }

@@ -1,7 +1,6 @@
-from datetime import datetime, timedelta, timezone
+from datetime import timedelta
 from uuid import uuid4
 
-import jwt
 from django.test import TestCase, override_settings
 from django.utils import timezone as django_time
 from rest_framework.test import APIClient
@@ -172,20 +171,6 @@ class PhaseFiveTests(TestCase):
         self.assertEqual(self.send("get", f"hostels/{self.pending.pk}/").status_code, 404)
         self.as_user(self.manager)
         self.assertEqual(self.send("post", manager_path, {"action": "publish"}).status_code, 400)
-
-    @override_settings(SUPABASE_URL="https://phase-five.example.com", SUPABASE_JWT_SECRET="phase-five-unit-test-key-long-enough")
-    def test_auth_onboarding_uses_token_identity_and_cannot_create_admin(self):
-        user_id = uuid4()
-        token = jwt.encode({"sub": str(user_id), "role": "authenticated", "aud": "authenticated",
-            "iss": "https://phase-five.example.com/auth/v1", "exp": datetime.now(timezone.utc) + timedelta(minutes=1)},
-            "phase-five-unit-test-key-long-enough", algorithm="HS256")
-        self.client.credentials(HTTP_AUTHORIZATION=f"Bearer {token}")
-        data = {"full_name": "New Account", "username": "new", "role": "admin", "id": str(self.admin.pk)}
-        self.assertEqual(self.send("post", "onboarding/", data).status_code, 400)
-        self.assertEqual(self.send("post", "onboarding/", data | {"role": "student"}).status_code, 201)
-        self.assertEqual(self.send("post", "onboarding/", data | {"role": "manager", "business_name": "Attempted change"}).json()["role"], "student")
-        self.assertEqual(self.send("get", "me/").json()["id"], str(user_id))
-        self.assertEqual(self.send("patch", "me/", {"role": "admin"}).json()["role"], "student")
 
     def test_mod_report_removes_roommate_from_discovery_even_if_owner_edits(self):
         profile = self.roommate(self.peer)

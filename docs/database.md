@@ -6,7 +6,7 @@ Django owns the application schema. The migrations in `backend/apps/` create the
 
 | Tables | Relationship |
 | --- | --- |
-| `profiles` | One row per Supabase Auth user. The primary key is the verified access token's subject UUID. Django has no cross-schema dependency on Supabase's `auth.users`. |
+| `profiles` | One row per application user. Django assigns the UUID during registration. |
 | `manager_profiles` | One-to-one with a manager profile identity. |
 | `hostels`, `hostel_images`, `room_types` | Managers own hostels. A hostel can have ordered photos and multiple room types. |
 | `amenities`, `hostel_amenities` | Many-to-many between hostels and amenities. Each hostel and amenity pair is unique. |
@@ -18,13 +18,13 @@ Django owns the application schema. The migrations in `backend/apps/` create the
 
 All application primary keys, including association row IDs, are UUIDs. Prices and roommate budgets are decimals in GHS. A room's available beds must be between zero and its total capacity. Indexes support common publication, availability, price, thread history, and moderation queries. Phone numbers, verification notes, and message bodies are private application data.
 
-Django endpoints must enforce profile roles and conversation membership before writing. Foreign keys enforce identity and referential integrity. Django provisions an account profile after Supabase sign-in and onboarding. Registering in Supabase alone does not create a Django profile. Protected APIs use the matching Auth UUID and the Django profile role.
+Django endpoints must enforce profile roles and conversation membership before writing. Foreign keys enforce identity and referential integrity. Registration atomically creates the profile and credential. The private `local_credentials` table stores the email and password hash. The private `login_sessions` table stores token digests and expiry timestamps. Protected APIs resolve the profile and role through the session.
 
 ## Connect a Supabase project
 
 1. In Supabase **Connect**, use the direct connection or the session pooler for IPv4-only clients. Use the exact host, port, database, username, and password from the connection panel. Use the same project for PostgreSQL, Auth and Storage.
 2. Copy `backend/.env.example` to `backend/.env` for a fresh local configuration. Set `POSTGRES_HOST`, `POSTGRES_PORT`, `POSTGRES_DB`, `POSTGRES_USER`, and `POSTGRES_PASSWORD`. Use TLS; for production use `POSTGRES_SSLMODE=verify-full` and set `POSTGRES_SSLROOTCERT` to the trusted CA file when needed.
-3. Set `SUPABASE_URL` to the project HTTPS origin. Django verifies asymmetric tokens through the project JWKS. Set `SUPABASE_JWT_SECRET` only for a legacy HS256 project. Set `SUPABASE_SERVICE_ROLE_KEY` to the backend-only legacy service-role key for Storage. Configure a stable `DJANGO_SECRET_KEY` and `DJANGO_DEBUG=false` for deployment. Keep credentials in a private environment store.
+3. Set `SUPABASE_URL` to the project HTTPS origin. Set `SUPABASE_SERVICE_ROLE_KEY` to the backend-only legacy service-role key for Storage. Configure a stable `DJANGO_SECRET_KEY` and `DJANGO_DEBUG=false` for deployment. Keep credentials in a private environment store.
 4. From `backend/`, with the virtual environment activated, run:
 
    ```shell
@@ -55,7 +55,7 @@ Set the deployment's HTTP request body limit slightly above the image limit to a
 
 ## Local development and tests
 
-Leave `POSTGRES_HOST` unset for SQLite. To retain local demonstration records, set `SQLITE_PATH` to a local `.sqlite3` file, run `python manage.py migrate`, then run `python manage.py seed_demo`. The default local seed path requires persistent SQLite in DEBUG mode and creates fictional database records. For isolated hosted demonstrations, the command can link confirmed Supabase Auth accounts using an explicit opt-in. See the [deployment guide](deployment.md).
+Leave `POSTGRES_HOST` unset for SQLite. To retain local demonstration records, set `SQLITE_PATH` to a local `.sqlite3` file, run `python manage.py migrate`, then run `python manage.py seed_demo`. The default local seed path requires persistent SQLite in DEBUG mode and creates fictional database records. For isolated hosted demonstrations, the command can use registered Hostel Hub accounts using an explicit opt-in. See the [deployment guide](deployment.md).
 
 Run `python manage.py makemigrations --check --dry-run` and `python manage.py test` from `backend/`. SQLite runs the schema, API and model tests and skips PostgreSQL-specific policy tests.
 

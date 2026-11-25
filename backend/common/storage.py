@@ -6,7 +6,7 @@ from django.conf import settings
 from PIL import Image, ImageOps, UnidentifiedImageError
 from rest_framework.exceptions import APIException, ValidationError
 
-from apps.accounts.authentication import project_url
+from common.supabase_config import project_url
 
 MAX_IMAGE_BYTES = 5 * 1024 * 1024
 MAX_IMAGE_PIXELS = 16_000_000

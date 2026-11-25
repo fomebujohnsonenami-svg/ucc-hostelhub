@@ -133,7 +133,6 @@ else:
     raise ImproperlyConfigured("POSTGRES_HOST is required when DJANGO_DEBUG is false.")
 
 SUPABASE_URL = os.getenv("SUPABASE_URL", "").rstrip("/")
-SUPABASE_JWT_SECRET = os.getenv("SUPABASE_JWT_SECRET", "")
 SUPABASE_SERVICE_ROLE_KEY = os.getenv("SUPABASE_SERVICE_ROLE_KEY", "")
 SUPABASE_HOSTEL_BUCKET = os.getenv("SUPABASE_HOSTEL_BUCKET", "hostel-images")
 SUPABASE_AVATAR_BUCKET = os.getenv("SUPABASE_AVATAR_BUCKET", "avatars")
@@ -142,7 +141,7 @@ DATA_UPLOAD_MAX_NUMBER_FILES = 1
 
 REST_FRAMEWORK = {
     "DEFAULT_RENDERER_CLASSES": ["rest_framework.renderers.JSONRenderer"],
-    "DEFAULT_AUTHENTICATION_CLASSES": ["apps.accounts.authentication.SupabaseAuthentication"],
+    "DEFAULT_AUTHENTICATION_CLASSES": ["apps.accounts.authentication.LocalAuthentication"],
     "DEFAULT_PERMISSION_CLASSES": ["rest_framework.permissions.IsAuthenticated"],
 }
 

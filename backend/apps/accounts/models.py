@@ -10,7 +10,6 @@ class Profile(TimestampedModel):
         MANAGER = "manager", "Manager"
         ADMIN = "admin", "Administrator"
 
-    # Provisioning must supply the UUID from a verified Supabase Auth token.
     id = models.UUIDField(primary_key=True, editable=False)
     full_name = models.CharField(max_length=150)
     username = models.SlugField(max_length=64, unique=True)
@@ -40,3 +39,21 @@ class ManagerProfile(UUIDModel):
 
     class Meta:
         db_table = "manager_profiles"
+
+
+class LocalCredential(models.Model):
+    profile = models.OneToOneField(Profile, on_delete=models.CASCADE, primary_key=True)
+    email = models.EmailField(unique=True)
+    password_hash = models.CharField(max_length=128)
+
+    class Meta:
+        db_table = "local_credentials"
+
+
+class LoginSession(models.Model):
+    digest = models.CharField(max_length=64, primary_key=True)
+    credential = models.ForeignKey(LocalCredential, on_delete=models.CASCADE)
+    expires_at = models.DateTimeField(db_index=True)
+
+    class Meta:
+        db_table = "login_sessions"

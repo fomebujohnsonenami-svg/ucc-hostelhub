@@ -1,5 +1,6 @@
 from django.urls import path
 
+from apps.accounts import api as accounts
 from apps.hostels import api as hostels
 from apps.messaging import api as messaging
 from apps.moderation import api as moderation
@@ -20,7 +21,9 @@ urlpatterns = [
     path("api/hostels/<uuid:hostel_id>/images/", hostel_image_upload, name="hostel-image-upload"),
     path("api/hostels/<uuid:hostel_id>/images/<uuid:image_id>/", hostel_image_detail, name="hostel-image-detail"),
 
-    path("api/onboarding/", workspaces.Onboarding.as_view()),
+    path("api/auth/register/", accounts.Register.as_view()),
+    path("api/auth/login/", accounts.Login.as_view()),
+    path("api/auth/logout/", accounts.Logout.as_view()),
     path("api/subscription-plans/", subscriptions.Plans.as_view()),
     path("api/manager/promotions/", subscriptions.Promotions.as_view()),
     path("api/manager/promotions/<uuid:pk>/", subscriptions.Promotion.as_view()),
