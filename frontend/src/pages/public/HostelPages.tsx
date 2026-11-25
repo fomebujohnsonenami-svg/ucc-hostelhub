@@ -22,7 +22,17 @@ import { areas, beds, dateLabel, money, price, roomTypes } from '../../utils/cat
 export function HostelDirectory({ student = false, saved = false }: { student?: boolean; saved?: boolean }) {
   const { token, saved: savedIds } = useSession()
   const [query, setQuery] = useSearchParams()
-  const [view, setView] = useState<'grid' | 'list' | 'map'>('grid')
+  const requestedView = query.get('view')
+  const view = requestedView === 'map' && !saved ? 'map' : requestedView === 'list' ? 'list' : 'grid'
+  function setView(nextView: 'grid' | 'list' | 'map') {
+    const next = new URLSearchParams(query)
+    if (nextView === 'grid') next.delete('view')
+    else next.set('view', nextView)
+    setQuery(next)
+  }
+  function clearFilters() {
+    setQuery(view === 'grid' ? {} : { view })
+  }
   const [filtersOpen, setFiltersOpen] = useState(false)
   const number = Math.max(1, Number(query.get('page')) || 1)
   const base = student ? '/student/hostels' : '/hostels'
@@ -36,6 +46,7 @@ export function HostelDirectory({ student = false, saved = false }: { student?: 
   const sort = query.get('sort') ?? 'latest'
   const invalid = min !== '' && max !== '' && Number(min) > Number(max)
   const params = new URLSearchParams(query)
+  params.delete('view')
   for (const [key, value] of params) if (!value.trim()) params.delete(key)
   const criterion = saved ? `saved-hostels/?page=${number}` : `hostels/?${params}`
   const page = useApi<ApiPage<PublicListing>>(invalid ? undefined : criterion, saved ? token : undefined)
@@ -79,7 +90,7 @@ export function HostelDirectory({ student = false, saved = false }: { student?: 
             return next
           })
         }} />{item}</label>)}</fieldset>
-        <div className="row between"><label className="row"><input type="checkbox" checked={available} onChange={event => change('available', event.target.checked ? 'yes' : '')} /> Available beds only</label><button className="text-link" onClick={() => setQuery({})}>Clear filters</button></div>
+        <div className="row between"><label className="row"><input type="checkbox" checked={available} onChange={event => change('available', event.target.checked ? 'yes' : '')} /> Available beds only</label><button className="text-link" onClick={clearFilters}>Clear filters</button></div>
       </div></>}
     <Result loading={page.loading} error={page.error} />
     <div className="row between results-bar"><p role="status">{invalid ? 'Minimum price must be less than or equal to maximum price.' : `${page.data?.count ?? 0} ${page.data?.count === 1 ? 'hostel' : 'hostels'}`}</p><div className="row">
@@ -87,13 +98,13 @@ export function HostelDirectory({ student = false, saved = false }: { student?: 
       <button className="icon-btn" aria-label="Grid view" aria-pressed={view === 'grid'} onClick={() => setView('grid')}><Grid2X2 size={18} /></button><button className="icon-btn" aria-label="List view" aria-pressed={view === 'list'} onClick={() => setView('list')}><List size={18} /></button>
       {!saved && <button className={view === 'map' ? 'btn primary' : 'btn outline'} aria-pressed={view === 'map'} onClick={() => setView('map')}><MapIcon size={17} /> Map View</button>}
     </div></div>
-    {view === 'map' && !invalid && <div className="discovery-map-results"><DiscoveryMap hostels={results} base={base} /></div>}
+    {view === 'map' && !invalid && !page.loading && !page.error && <div className="discovery-map-results"><DiscoveryMap hostels={results} base={base} /></div>}
     {!saved && view !== 'map' && Boolean(promoted.data?.results.length) && <section className="panel padded dashboard-gap">
       <div className="section-heading"><h2>Promoted hostels</h2><PremiumBadge>Manager Premium</PremiumBadge></div>
       <div className="row">{promoted.data?.results.map(item => <Link key={item.id} className="btn outline" to={`${base}/${item.id}`}>{item.name} · {item.area}</Link>)}</div>
     </section>}
     {!invalid && !page.loading && !page.error && view !== 'map'  && (results.length ? <div className={view === 'list' ? 'list-stack' : 'cards-grid'}>{results.map(hostel => <HostelCard key={hostel.id} hostel={hostel} list={view === 'list'} base={base} />)}</div>
-      : <Empty title={saved ? 'No saved hostels yet' : 'No hostels match your filters'} text={saved ? 'Tap the heart on a listing to save it here.' : 'Try a wider price range or fewer amenities.'} action={saved ? <Link className="btn primary" to={base}>Browse hostels</Link> : <button className="btn outline" onClick={() => setQuery({})}>Reset filters</button>} />)}
+      : <Empty title={saved ? 'No saved hostels yet' : 'No hostels match your filters'} text={saved ? 'Tap the heart on a listing to save it here.' : 'Try a wider price range or fewer amenities.'} action={saved ? <Link className="btn primary" to={base}>Browse hostels</Link> : <button className="btn outline" onClick={clearFilters}>Reset filters</button>} />)}
     <Paging page={page.data} number={number} change={page => change('page', String(page))} />
   </div>
 }

@@ -29,7 +29,7 @@ export default function HomePage() {
       <div className="wrap hero-inner">
         <div className="hero-copy"><Badge>For UCC Students</Badge><h1>Find, Explore and Secure Hostels Around UCC</h1>
           <p>Discover student hostels, check room availability, find compatible roommates, and connect directly with hostel managers—all in one place.</p>
-          <div className="row hero-actions"><Link className="btn primary" to="/hostels">Find a Hostel <ArrowRight size={17} /></Link><Link className="btn outline" to="/#how-it-works"><CirclePlay size={18} /> How It Works</Link></div>
+          <div className="row hero-actions"><Link className="btn primary" to="/hostels">Find a Hostel <ArrowRight size={17} /></Link><Link className="btn outline" to="/hostels?view=map"><MapPin size={18} /> Explore Hostel Map</Link><Link className="btn outline" to="/#how-it-works"><CirclePlay size={18} /> How It Works</Link></div>
         </div>
         {first && <div className="hero-callouts"><div className="hero-location"><MapPin size={24} /> <span>Near UCC<br /><small>{first.area}</small></span></div><div className="hero-availability"><BedDouble size={24} /><span>{first.name}<br /><Badge success={beds(first) > 0}>{beds(first)} beds reported</Badge></span></div></div>}
       </div>
