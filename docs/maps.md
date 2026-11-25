@@ -2,7 +2,11 @@
 
 The directory and detail pages read published listings from Django. Suspended or rejected listings stay hidden. Grid and Map View use the same filtered results page. Only listings with a valid coordinate pair appear as markers.
 
-The map centers on the UCC area if there are no markers. The details page uses the saved coordinates for its pin and Google Maps directions link. That link opens a separate site and uses no Google API or key.
+The map centers on the UCC area if there are no markers. The details page opens with a map centered on the saved hostel coordinates. Its Google Maps link opens a separate site and uses no Google API key.
+
+## Walking directions
+
+Visitors can select **Get walking directions** on a hostel listing. The browser asks for permission to use their current location. If granted, the browser sends the origin and hostel coordinates to the [OSRM foot routing service](https://routing.openstreetmap.de/) and draws the returned route on the map. Distance and estimated walking time come from that route. Hostel Hub does not store the visitor’s location. If routing or geolocation fails, visitors can still open the saved hostel location in Google Maps.
 
 ## Connect a live manager account
 

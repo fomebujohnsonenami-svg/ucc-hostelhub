@@ -4,7 +4,7 @@ import workerUrl from 'maplibre-gl/dist/maplibre-gl-worker.mjs?worker&url'
 import { divIcon, latLngBounds } from 'leaflet'
 import { useCallback, useEffect, useMemo, useState } from 'react'
 import type { ReactNode } from 'react'
-import { MapContainer, Marker, Popup, TileLayer, useMap, useMapEvents } from 'react-leaflet'
+import { MapContainer, Marker, Polyline, Popup, TileLayer, useMap, useMapEvents } from 'react-leaflet'
 import 'leaflet/dist/leaflet.css'
 import 'maplibre-gl/dist/maplibre-gl.css'
 import type { Coordinates } from '../../types/location'
@@ -33,6 +33,14 @@ function ViewBounds({ pins }: { pins: MapPin[] }) {
     else map.setView(ucc, 14)
   }, [map, pins])
   return null
+}
+
+function RouteLine({ points }: { points: Coordinates[] }) {
+  const map = useMap()
+  useEffect(() => {
+    map.fitBounds(latLngBounds(points), { padding: [32, 32], maxZoom: 16 })
+  }, [map, points])
+  return <Polyline positions={points} pathOptions={{ color: '#6236C5', weight: 5 }} />
 }
 
 function PickLocation({ center, onPosition }: { center?: Coordinates; onPosition: (position: Coordinates) => void }) {
@@ -69,8 +77,8 @@ function OpenFreeMapLayer({ onReady, onUnavailable }: { onReady: () => void; onU
   return null
 }
 
-export default function LeafletMap({ pins, label, center, fit = false, onPosition }: {
-  pins: MapPin[]; label: string; center?: Coordinates; fit?: boolean; onPosition?: (position: Coordinates) => void
+export default function LeafletMap({ pins, label, center, fit = false, route, onPosition }: {
+  pins: MapPin[]; label: string; center?: Coordinates; fit?: boolean; route?: Coordinates[]; onPosition?: (position: Coordinates) => void
 }) {
   const [tileState, setTileState] = useState<'loading' | 'ready' | 'error'>('loading')
   const [useRaster, setUseRaster] = useState(Boolean(import.meta.env.VITE_MAP_TILE_URL))
@@ -88,6 +96,7 @@ export default function LeafletMap({ pins, label, center, fit = false, onPositio
     <MapContainer className="hostel-map" center={center ?? ucc} zoom={center ? 16 : 14} scrollWheelZoom={false} worldCopyJump>
       {useRaster ? <TileLayer url={rasterUrl} attribution={attribution} maxZoom={19} eventHandlers={tileEvents} /> :
         <OpenFreeMapLayer onReady={onVectorReady} onUnavailable={onVectorUnavailable} />}
+      {route && <RouteLine points={route} />}
       {fit && <ViewBounds pins={pins} />}
       {onPosition && <PickLocation center={center} onPosition={onPosition} />}
       {pins.map(pin => <Marker key={pin.id} position={pin.position} icon={markerIcon} title={pin.name} alt={pin.name}

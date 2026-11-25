@@ -20,7 +20,7 @@ export default function LocationPicker({ value, onChange }: { value: LocationInp
     setMessage('')
     navigator.geolocation.getCurrentPosition(({ coords }) => {
       onChange({ latitude: coords.latitude.toFixed(6), longitude: coords.longitude.toFixed(6) })
-      setMessage('Pin placed at your current location. Check its position before saving.')
+      setMessage(`Pin placed using your location (estimated accuracy: ${Math.round(coords.accuracy)} m). Adjust it if needed before saving.`)
       setLocating(false)
     }, () => {
       setMessage('Could not get your location. You can still place the pin on the map.')

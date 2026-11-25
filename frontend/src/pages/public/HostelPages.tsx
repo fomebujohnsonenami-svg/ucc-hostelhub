@@ -1,11 +1,11 @@
-import { ArrowLeft, Grid2X2, List, Map as MapIcon, MapPin, Navigation, Search, SlidersHorizontal } from 'lucide-react'
+import { ArrowLeft, Grid2X2, List, Map as MapIcon, MapPin, Search, SlidersHorizontal } from 'lucide-react'
 import { useEffect, useState } from 'react'
 import { Link, useParams, useSearchParams } from 'react-router'
 import { Badge, Empty, Field, Heading } from '../../components/common/UI'
 import HostelCard, { HostelPhoto, SaveButton } from '../../components/hostels/HostelCard'
 import PremiumBadge from '../../components/premium/PremiumBadge'
 import DiscoveryMap from '../../components/hostels/DiscoveryMap'
-import MapView from '../../components/maps/MapView'
+import HostelDirections from '../../components/maps/HostelDirections'
 import { useSession } from '../../contexts/SessionContext'
 import { useApi } from '../../hooks/useApi'
 import { Paging, Result } from '../../components/common/ApiUI'
@@ -16,7 +16,6 @@ import { ApiError } from '../../services/api'
 import { approvedHostel, asHostel } from '../../services/hostels'
 import type { PublicListing } from '../../services/hostels'
 import type { Hostel } from '../../types/hostel'
-import { directions } from '../../types/location'
 import { areas, beds, dateLabel, money, price, roomTypes } from '../../utils/catalogue'
 
 export function HostelDirectory({ student = false, saved = false }: { student?: boolean; saved?: boolean }) {
@@ -133,23 +132,22 @@ export function HostelDetails({ student = false }: { student?: boolean }) {
     return <div className={container}><Empty title={result.error ? 'Could not load the hostel' : 'Hostel unavailable'} action={result.error ? <button className="btn outline" onClick={() => setRetry(value => value + 1)}>Try again</button> : <Link className="btn outline" to={base}>Back to hostels</Link>} /></div>
   }
   const active = photo < hostel.images.length ? photo : 0
-  const destination = hostel.location ? directions(hostel.location) : null
   const lowestRoom = hostel.rooms.find(room => room.price === price(hostel))
   return <div className={student ? '' : 'wrap section'}>
     <Link className="text-link back-link" to={base}><ArrowLeft size={17} /> Back to Hostels</Link>
-    <div className="gallery"><div className="gallery-main panel"><HostelPhoto hostel={hostel} index={active} /></div>
+    <Heading title={hostel.name} text={hostel.address} action={hostel.featured && <PremiumBadge>Featured</PremiumBadge>} />
+    <section className="panel padded stack">
+      <h2>Location &amp; Directions</h2>
+      <p className="row"><MapPin size={17} aria-hidden="true" />{hostel.address} · {hostel.area}</p>
+      {hostel.location ? <HostelDirections key={hostel.id} name={hostel.name} destination={hostel.location} />
+        : <p className="muted">This listing has no saved map location yet. Use the address to identify the area.</p>}
+    </section>
+    <div className="gallery dashboard-gap"><div className="gallery-main panel"><HostelPhoto hostel={hostel} index={active} /></div>
       {hostel.images.length > 1 && <div className="gallery-thumbs">{hostel.images.map((image, index) => <button key={`${image}-${index}`} aria-label={`Show photo ${index + 1}`} aria-pressed={active === index} onClick={() => setPhoto(index)}><HostelPhoto hostel={hostel} index={index} decorative /></button>)}</div>}
     </div>
-    <div className="detail-grid"><div className="stack"><Heading title={hostel.name} text={hostel.address} action={hostel.featured && <PremiumBadge>Featured</PremiumBadge>} />
+    <div className="detail-grid"><div className="stack">
       <section className="panel padded"><h2>About this hostel</h2><p>{hostel.description}</p><h3>Amenities</h3><div className="row">{hostel.amenities.map(item => <Badge key={item}>{item}</Badge>)}</div></section>
       <section className="panel padded"><h2>Rooms & Prices</h2>{hostel.rooms.length ? <div className="stack">{hostel.rooms.map(room => <div className="row between room-line" key={room.id}><strong>{room.type}</strong><span>{money(room.price)} / {room.billingPeriod ?? 'semester'}</span><div><Badge success={room.beds > 0 && !room.stale}>{room.beds} beds reported</Badge>{room.availabilityUpdated && <p className="small-text">Confirmed {dateLabel(room.availabilityUpdated)}{room.stale ? ' · Reconfirmation needed' : ''}</p>}</div></div>)}</div> : <p>No room types have been added.</p>}</section>
-      <section className="panel padded"><h2>Location &amp; Directions</h2>
-        <p className="row"><MapPin size={17} aria-hidden="true" />{hostel.address} · {hostel.area}</p>
-        {hostel.location && destination ? <div className="stack">
-          <MapView key={hostel.id} label={`Location of ${hostel.name}`} center={hostel.location} pins={[{ id: hostel.id, name: hostel.name, position: hostel.location }]} />
-          <div><a className="btn outline" href={destination} target="_blank" rel="noreferrer"><Navigation size={16} /> Get Directions</a></div>
-        </div> : <p className="muted">This listing has no confirmed coordinates yet. Use the address to identify the area.</p>}
-      </section>
     </div><aside className="panel padded detail-aside"><p className="price">{lowestRoom ? <>{money(lowestRoom.price)} <small>/ {lowestRoom.billingPeriod ?? 'semester'}</small></> : 'Price unavailable'}</p><h3>Availability</h3><Badge success={beds(hostel) > 0}>{beds(hostel)} beds reported</Badge><p className="muted">Availability is reported by the hostel manager. Confirm with the manager before making plans.</p>
       <div className="stack"><ContactButton target="hostel" id={hostel.id} label="Contact Manager" /><SaveButton hostel={hostel} /><ReportButton target="hostel" id={hostel.id} /></div>
     </aside></div>
