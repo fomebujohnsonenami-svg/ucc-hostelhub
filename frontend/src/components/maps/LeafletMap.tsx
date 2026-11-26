@@ -43,6 +43,14 @@ function RouteLine({ points }: { points: Coordinates[] }) {
   return <Polyline positions={points} pathOptions={{ color: '#6236C5', weight: 5 }} />
 }
 
+function FocusLocation({ position }: { position: Coordinates }) {
+  const map = useMap()
+  useEffect(() => {
+    map.setView(position, 16)
+  }, [map, position])
+  return null
+}
+
 function PickLocation({ center, onPosition }: { center?: Coordinates; onPosition: (position: Coordinates) => void }) {
   const map = useMapEvents({ click: event => onPosition(event.latlng.wrap()) })
   useEffect(() => {
@@ -77,8 +85,8 @@ function OpenFreeMapLayer({ onReady, onUnavailable }: { onReady: () => void; onU
   return null
 }
 
-export default function LeafletMap({ pins, label, center, fit = false, route, onPosition }: {
-  pins: MapPin[]; label: string; center?: Coordinates; fit?: boolean; route?: Coordinates[]; onPosition?: (position: Coordinates) => void
+export default function LeafletMap({ pins, label, center, fit = false, focus, route, onPosition }: {
+  pins: MapPin[]; label: string; center?: Coordinates; fit?: boolean; focus?: Coordinates; route?: Coordinates[]; onPosition?: (position: Coordinates) => void
 }) {
   const [tileState, setTileState] = useState<'loading' | 'ready' | 'error'>('loading')
   const [useRaster, setUseRaster] = useState(Boolean(import.meta.env.VITE_MAP_TILE_URL))
@@ -97,7 +105,8 @@ export default function LeafletMap({ pins, label, center, fit = false, route, on
       {useRaster ? <TileLayer url={rasterUrl} attribution={attribution} maxZoom={19} eventHandlers={tileEvents} /> :
         <OpenFreeMapLayer onReady={onVectorReady} onUnavailable={onVectorUnavailable} />}
       {route && <RouteLine points={route} />}
-      {fit && <ViewBounds pins={pins} />}
+      {fit && !focus && <ViewBounds pins={pins} />}
+      {focus && <FocusLocation position={focus} />}
       {onPosition && <PickLocation center={center} onPosition={onPosition} />}
       {pins.map(pin => <Marker key={pin.id} position={pin.position} icon={markerIcon} title={pin.name} alt={pin.name}
         draggable={Boolean(onPosition)} eventHandlers={onPosition ? { dragend: event => onPosition(event.target.getLatLng().wrap()) } : undefined}>

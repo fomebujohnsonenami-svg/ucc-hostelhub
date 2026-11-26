@@ -4,6 +4,10 @@ The directory and detail pages read published listings from Django. Suspended or
 
 The map centers on the UCC area if there are no markers. The details page opens with a map centered on the saved hostel coordinates. Its Google Maps link opens a separate site and uses no Google API key.
 
+## Place search
+
+**Find a place** searches mapped names, addresses and landmarks in Ghana using the [Photon geocoder](https://photon.komoot.io/), biased toward UCC. Searches are sent only when submitted. On the public map, select a result to drop a pin and zoom to it. **Search Map** separately filters published Hostel Hub listings. On the manager’s listing form, selecting a result fills both coordinates. Adjust the pin before saving if the result is approximate. If a hostel is missing from Photon, search for a nearby landmark and move the pin to the hostel.
+
 ## Walking directions
 
 Visitors can select **Get walking directions** on a hostel listing. The browser asks for permission to use their current location. If granted, the browser sends the origin and hostel coordinates to the [OSRM foot routing service](https://routing.openstreetmap.de/) and draws the returned route on the map. Distance and estimated walking time come from that route. Hostel Hub does not store the visitor’s location. If routing or geolocation fails, visitors can still open the saved hostel location in Google Maps.

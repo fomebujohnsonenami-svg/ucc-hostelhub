@@ -5,6 +5,8 @@ import { Badge, Empty, Field, Heading } from '../../components/common/UI'
 import HostelCard, { HostelPhoto, SaveButton } from '../../components/hostels/HostelCard'
 import PremiumBadge from '../../components/premium/PremiumBadge'
 import DiscoveryMap from '../../components/hostels/DiscoveryMap'
+import PlaceSearch from '../../components/maps/PlaceSearch'
+import type { Place } from '../../services/places'
 import HostelDirections from '../../components/maps/HostelDirections'
 import { useSession } from '../../contexts/SessionContext'
 import { useApi } from '../../hooks/useApi'
@@ -32,6 +34,7 @@ export function HostelDirectory({ student = false, saved = false }: { student?: 
   function clearFilters() {
     setQuery(view === 'grid' ? {} : { view })
   }
+  const [place, setPlace] = useState<Place>()
   const [filtersOpen, setFiltersOpen] = useState(false)
   const number = Math.max(1, Number(query.get('page')) || 1)
   const base = student ? '/student/hostels' : '/hostels'
@@ -101,7 +104,7 @@ export function HostelDirectory({ student = false, saved = false }: { student?: 
       <form className="row discovery-toolbar" role="search" aria-label="Hostel map search" onSubmit={event => {
         event.preventDefault()
         const term = new FormData(event.currentTarget).get('location')
-        if (typeof term === 'string') change('q', term.trim())
+        if (typeof term === 'string') { setPlace(undefined); change('q', term.trim()) }
       }}>
         <label className="search-input panel">
           <Search size={18} aria-hidden="true" />
@@ -111,7 +114,9 @@ export function HostelDirectory({ student = false, saved = false }: { student?: 
         <button type="submit" className="btn primary">Search Map</button>
         {q && <button type="button" className="btn outline" onClick={() => change('q', '')}>Clear search</button>}
       </form>
-      {!invalid && !page.loading && !page.error && <DiscoveryMap hostels={results} base={base} />}
+      <PlaceSearch onSelect={setPlace} />
+      {place && <div className="row"><span>{place.label}</span><button type="button" className="text-link" onClick={() => setPlace(undefined)}>Remove place pin</button></div>}
+      {(place || (!invalid && !page.loading && !page.error)) && <DiscoveryMap hostels={results} base={base} place={place} />}
     </div>}
     {!saved && view !== 'map' && Boolean(promoted.data?.results.length) && <section className="panel padded dashboard-gap">
       <div className="section-heading"><h2>Promoted hostels</h2><PremiumBadge>Manager Premium</PremiumBadge></div>
