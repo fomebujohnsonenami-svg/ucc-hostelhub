@@ -26,6 +26,7 @@ export default function SiteLayout({ role }: { role?: Role }) {
   const location = useLocation()
   const navigate = useNavigate()
   const { account, token, loading, error, setToken } = useSession()
+  const [loggingOut, setLoggingOut] = useState(false)
   const [logoutError, setLogoutError] = useState(false)
 
   useEffect(() => {
@@ -39,15 +40,30 @@ export default function SiteLayout({ role }: { role?: Role }) {
   function closeMenu() { drawer.current?.close(); setOpen(false) }
 
   async function logout() {
+    if (!token || loggingOut) return
+    setLoggingOut(true)
+    setLogoutError(false)
     try {
       await apiRequest('auth/logout/', { method: 'POST' }, token)
     } catch (error) {
-      if (!(error instanceof ApiError && error.status === 401)) { setLogoutError(true); return }
+      if (!(error instanceof ApiError && error.status === 401)) {
+        closeMenu()
+        setLogoutError(true)
+        return
+      }
+    } finally {
+      setLoggingOut(false)
     }
     setToken()
     closeMenu()
-    void navigate('/')
+    void navigate('/', { replace: true })
   }
+
+  const logoutLabel = loggingOut ? 'Logging out…' : 'Log out'
+  const logoutButton = <button type="button" className="btn outline" disabled={loggingOut} onClick={() => void logout()}>
+    <LogOut size={16} aria-hidden="true" />{logoutLabel}
+  </button>
+  const logoutNotice = logoutError && <p role="alert" className="notice error">Sign-out failed. Try again.</p>
 
   if (!role) return <>
     <a className="skip" href="#main">Skip to content</a>
@@ -56,27 +72,30 @@ export default function SiteLayout({ role }: { role?: Role }) {
         <Brand />
         <div id="public-nav" className={open ? 'public-nav open' : 'public-nav'}>
           <nav aria-label="Main navigation">{publicLinks.map(([to, label]) => to.includes('#') ? <Link key={to} to={to} onClick={closeMenu}>{label}</Link> : <NavLink end key={to} to={to} onClick={closeMenu}>{label}</NavLink>)}</nav>
-          <div className="row">{account ? <Link className="btn primary" to={`/${account.role}`} onClick={closeMenu}>My dashboard</Link> : <><Link className="btn outline" to="/login" onClick={closeMenu}>Log in</Link><Link className="btn primary" to="/register" onClick={closeMenu}>Get Started</Link></>}</div>
+          <div className="row">{account ? <Link className="btn primary" to={`/${account.role}`} onClick={closeMenu}>My dashboard</Link>
+            : <><Link className="btn outline" to="/login" onClick={closeMenu}>Log in</Link><Link className="btn primary" to="/register" onClick={closeMenu}>Get Started</Link></>}
+            {token && logoutButton}
+          </div>
         </div>
         <ThemeToggle />
         <button className="icon-btn public-menu" aria-label={open ? 'Close navigation' : 'Open navigation'} aria-expanded={open} aria-controls="public-nav" onClick={() => setOpen(!open)}>{open ? <X /> : <Menu />}</button>
       </div>
     </header>
-    <main id="main" tabIndex={-1}><Outlet /></main>
+    <main id="main" tabIndex={-1}>{logoutError && <div className="wrap">{logoutNotice}</div>}<Outlet /></main>
     <footer className="footer"><div className="wrap footer-grid"><div><Brand /><p>Student accommodation around the University of Cape Coast, Ghana.</p></div><nav aria-label="Footer navigation">{publicLinks.slice(1).map(([to, label]) => <Link key={to} to={to}>{label}</Link>)}</nav><div><strong>Contact & support</strong><p>Cape Coast, Ghana</p><Link to="/help">Visit the help centre</Link></div></div></footer>
   </>
 
   const menu = <><Brand /><p className="sidebar-role">{role}</p><nav aria-label={`${role} navigation`}>
     {roleNavigation[role].map(([path, label, Icon]) => <NavLink key={path} end={!path} to={`/${role}${path}`} onClick={closeMenu}><Icon size={18} aria-hidden="true" />{label}</NavLink>)}
-  </nav><div className="sidebar-end"><Link to={`/${role}/help`} onClick={closeMenu}><CircleHelp size={18} aria-hidden="true" />Help & Support</Link><button onClick={() => void logout()}><LogOut size={18} aria-hidden="true" />Logout</button></div></>
+  </nav><div className="sidebar-end"><Link to={`/${role}/help`} onClick={closeMenu}><CircleHelp size={18} aria-hidden="true" />Help & Support</Link>{token && <button type="button" disabled={loggingOut} onClick={() => void logout()}><LogOut size={18} aria-hidden="true" />{logoutLabel}</button>}</div></>
   return <div className="dashboard-shell">
     <a className="skip" href="#main">Skip to content</a>
     <aside className="sidebar">{menu}</aside>
     <dialog className="sidebar-drawer" ref={drawer} aria-label="Dashboard navigation" onClose={() => setOpen(false)} onCancel={closeMenu}><div className="drawer-content"><button className="icon-btn drawer-close" aria-label="Close menu" onClick={closeMenu}><X /></button>{menu}</div></dialog>
     <div className="dashboard-body">
-      <header className="dashboard-top"><button className="icon-btn drawer-toggle" aria-label="Open dashboard menu" aria-expanded={open} onClick={() => { drawer.current?.showModal(); setOpen(true) }}><Menu /></button><ThemeToggle /><span className="avatar small" title={account?.full_name ?? role}>{(account?.role === role ? account.full_name : role).slice(0, 2).toUpperCase()}</span></header>
+      <header className="dashboard-top"><button className="icon-btn drawer-toggle" aria-label="Open dashboard menu" aria-expanded={open} onClick={() => { drawer.current?.showModal(); setOpen(true) }}><Menu /></button><ThemeToggle />{token && logoutButton}<span className="avatar small" title={account?.full_name ?? role}>{(account?.role === role ? account.full_name : role).slice(0, 2).toUpperCase()}</span></header>
       <main className="dashboard-content" id="main" tabIndex={-1}>
-        {logoutError && <p role="alert" className="notice error">Sign-out failed. Try again.</p>}
+        {logoutNotice}
         {loading ? <p role="status">Checking your session…</p> : account?.role === role ? <Outlet /> :
           <div className="panel padded"><p>{account ? 'This workspace is for a different account role.' : token && error ? 'Your application profile could not be loaded.' : 'Sign in to access this workspace.'}</p>
             <Link className="btn primary" to={account ? `/${account.role}` : '/login'}>{account ? 'Open your dashboard' : 'Sign in'}</Link></div>}
