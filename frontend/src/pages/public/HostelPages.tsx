@@ -73,7 +73,7 @@ export function HostelDirectory({ student = false, saved = false }: { student?: 
 
   return <div className={student ? '' : 'wrap section'}>
     <Heading title={saved ? 'Saved Hostels' : 'Find Hostels'} text={saved ? 'Keep track of the hostels you want to compare.' : 'Search and compare student accommodation around UCC.'} />
-    {!saved && <><div className="row discovery-toolbar"><label className="search-input panel"><Search size={18} /><span className="sr-only">Search hostels</span><input value={q} onChange={event => change('q', event.target.value)} placeholder="Search by hostel name or location" /></label><button className="btn outline filter-toggle" aria-expanded={filtersOpen} aria-controls="hostel-filters" onClick={() => setFiltersOpen(!filtersOpen)}><SlidersHorizontal size={16} /> Filters</button></div>
+    {!saved && <><div className="row discovery-toolbar">{view !== 'map' && <label className="search-input panel"><Search size={18} /><span className="sr-only">Search hostels</span><input value={q} onChange={event => change('q', event.target.value)} placeholder="Search by hostel name or location" /></label>}<button className="btn outline filter-toggle" aria-expanded={filtersOpen} aria-controls="hostel-filters" onClick={() => setFiltersOpen(!filtersOpen)}><SlidersHorizontal size={16} /> Filters</button></div>
       <div className={filtersOpen ? 'panel filter-panel open' : 'panel filter-panel'} id="hostel-filters">
         <div className="filter-grid"><Field label="Location"><select value={area} onChange={event => change('area', event.target.value)}><option value="">All areas</option>{locations.map(item => <option key={item}>{item}</option>)}</select></Field>
           <Field label="Minimum price (GH₵)"><input type="number" step=".01" min="0" value={min} onChange={event => change('min', event.target.value)} placeholder="Any" /></Field>
@@ -97,7 +97,22 @@ export function HostelDirectory({ student = false, saved = false }: { student?: 
       <button className="icon-btn" aria-label="Grid view" aria-pressed={view === 'grid'} onClick={() => setView('grid')}><Grid2X2 size={18} /></button><button className="icon-btn" aria-label="List view" aria-pressed={view === 'list'} onClick={() => setView('list')}><List size={18} /></button>
       {!saved && <button className={view === 'map' ? 'btn primary' : 'btn outline'} aria-pressed={view === 'map'} onClick={() => setView('map')}><MapIcon size={17} /> Map View</button>}
     </div></div>
-    {view === 'map' && !invalid && !page.loading && !page.error && <div className="discovery-map-results"><DiscoveryMap hostels={results} base={base} /></div>}
+    {view === 'map' && <div className="discovery-map-results">
+      <form className="row discovery-toolbar" role="search" aria-label="Hostel map search" onSubmit={event => {
+        event.preventDefault()
+        const term = new FormData(event.currentTarget).get('location')
+        if (typeof term === 'string') change('q', term.trim())
+      }}>
+        <label className="search-input panel">
+          <Search size={18} aria-hidden="true" />
+          <span className="sr-only">Hostel name, area, or address</span>
+          <input key={q} name="location" type="search" defaultValue={q} placeholder="Hostel name, area, or address" />
+        </label>
+        <button type="submit" className="btn primary">Search Map</button>
+        {q && <button type="button" className="btn outline" onClick={() => change('q', '')}>Clear search</button>}
+      </form>
+      {!invalid && !page.loading && !page.error && <DiscoveryMap hostels={results} base={base} />}
+    </div>}
     {!saved && view !== 'map' && Boolean(promoted.data?.results.length) && <section className="panel padded dashboard-gap">
       <div className="section-heading"><h2>Promoted hostels</h2><PremiumBadge>Manager Premium</PremiumBadge></div>
       <div className="row">{promoted.data?.results.map(item => <Link key={item.id} className="btn outline" to={`${base}/${item.id}`}>{item.name} · {item.area}</Link>)}</div>
